@@ -14,8 +14,8 @@
 # -U TAU_ALPHA \ # sets the macroscopic "rampUp" time constant
 
 LIBS = -lgsl -lgslcblas -lm
-#FLAGS = -std=c99 -O3
-FLAGS = -std=c99 -O0 -g
+FLAGS = -std=c99 -O3
+#FLAGS = -std=c99 -O0 -g
 
 # simulation. Why ETA bigger by factor 100 than default?
 rampUp:
