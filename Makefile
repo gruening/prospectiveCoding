@@ -14,8 +14,8 @@
 # -U TAU_ALPHA \ # sets the macroscopic "rampUp" time constant
 
 LIBS = -lgsl -lgslcblas -lm
-FLAGS = -std=c99 -O3
-#FLAGS = -std=c99 -O0 -g
+#FLAGS = -std=gnu99 -O3
+FLAGS = -std=gnu99 -O0 -g
 
 # simulation. Why ETA bigger by factor 100 than default?
 rampUp:
@@ -65,8 +65,14 @@ rotations:
 
 	@for i in $$(seq 20 10 200); do \
 		gcc $(FLAGS) -D ROTATIONS -D RECORD_PREACT -D TAU_ALPHA=$$i -D FILENAME_POST=\"data/rotationsPost_$$i.dat\" -D FILENAME_PRE=\"data/rotationsPre_$$i.dat\" -D FROZEN_POISSON -c src/c/rampUp.c -o rotation$$i.o; gcc rotation$$i.o $(LIBS) -o bin/rotation$$i; rm rotation$$i.o; \
-#		time ./bin/rotation$$i; \
+#		time ./bin/rotation$$i; 
 	done
+
+motoric:
+	gcc $(FLAGS) -D ROTATIONS -D RECORD_PREACT -D TAU_ALPHA=100 -D FILENAME_POST=\"data/$@Post.dat\" -D FILENAME_PRE=\"data/$@Pre.dat\" -D FROZEN_POISSON -c src/c/$@.c -o $@.o
+	gcc $@.o $(LIBS) -o bin/$@
+	rm $@.o; 
+
 
 # xxx next experiments xxx -- think about the prospective coding
 
@@ -85,4 +91,4 @@ recurrent:
 makedirs:
 	mkdir -p data bin
 
-all: makedirs rampUp rampUpC rampUpFP rampUpFPC rampUpRate rampUpRateC rotations traceConditioning recurrent
+all: makedirs rampUp rampUpC rampUpFP rampUpFPC rampUpRate rampUpRateC rotations motoric traceConditioning recurrent

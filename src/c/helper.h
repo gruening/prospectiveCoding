@@ -1,6 +1,7 @@
 #include <math.h>
 
-#define DT .1	//! time step [ms] for forward Euler integration
+#define BINS_PER_MS 10
+#define DT (1.0 / BINS_PER_MS) //! time step [ms] for forward Euler integration
 
 // parameters of neural dynamics
 #define GD 1.8	//! [ms^-1 = mS/muF] two-way conductance between dendrite and soma
@@ -164,6 +165,6 @@ double spiking(double rate, double rn) {
 
    uses global random r.
 */
-double runOU(double ou, double m, double gamma, double s) {
+inline double runOU(const double ou, const double m, const double gamma, const double s) {
 	return gamma * ou + (1.-gamma) * m + s * gsl_ran_gaussian_ziggurat(r,1);
 }
