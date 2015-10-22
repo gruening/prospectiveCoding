@@ -1,6 +1,8 @@
 #include <math.h>
 #include <float.h>
 
+#define DEBUG 1
+
 // global experimental parameters
 
 /*! random seed this time, but this is overriden by a later call with 0, 
@@ -13,11 +15,11 @@
 // definition of the network size and structure
 
 #define MOTORIC_START 0
-#define N_MOTORIC 1000 // number of motoric neurons
+#define N_MOTORIC 100 // number of motoric neurons
 #define MOTORIC_END MOTORIC_START + N_MOTORIC
 
 #define AUDITORY_START MOTORIC_END
-#define N_AUDITORY 1000 // number of auditory neurons
+#define N_AUDITORY 0 // number of auditory neurons
 #define AUDITORY_END AUDITORY_START + N_AUDITORY
 
 //! total number of neurons in the network
@@ -45,7 +47,7 @@ void initDerivedParams() {
   //! actually transmitted via GE?
   for(int t = 0; t < TIMEBINS; t++) {
     for(int i = 0; i < N_MOTORIC; i++ ) {
-      motoric_GE[t*N_MOTORIC + i] = .006 * 
+      motoric_GE[t*N_MOTORIC + i] = .6 * 
 	(1 - sin(omega * t * DT) * sin(2 * omega * t * DT) * cos(4 * omega * t * DT)) * DT; 
       // what does a pattern for
       // a conductance based
@@ -55,6 +57,24 @@ void initDerivedParams() {
     }
   }	
 
+#if DEBUG
+  FILE *iF = popen("gzip > data/" BASENAME "I.gz", "w"); //! inputs file
+  // header for weight file:
+  for(uint i = 0; i < N_MOTORIC; i++) {
+    fprintf(iF, "Input%u\t", i);
+  }
+  fputc('\n', iF);
+  for(uint t = 0; t < TIMEBINS; t++) {
+    fprintf(iF, "# Timebin %u\n", t);
+    for(uint i = 0; i < N_MOTORIC; i++) {
+      fprintf(iF, "%g\t", motoric_GE[t*N_MOTORIC+i]);
+    }
+    fputc('\n', iF);
+  }
+  pclose(iF);
+#endif
+
+#if 0
   //! potential that the auditory neurns accually gets:
   for(int t = 0; t < TIMEBINS; t++) {
     for(int i = 0; i < N_AUDITORY; i++ ) {
@@ -76,5 +96,6 @@ void initDerivedParams() {
 	auditory_GE[t*N_AUDITORY + i] = motoric_GE[(t-DELAY_EXTERNAL*BINS_PER_MS)*N_MOTORIC + i]; 
       }
     }
-  }											 
+  }
+#endif											 
 }

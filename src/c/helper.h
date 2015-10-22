@@ -58,7 +58,8 @@
  @param gE conductance of excitory somatic synpase [in units of DT?]
  @param gI conductance of inhibitory somatic synpaes [in units of DT xxx]
  */
-void updateMembrane(double * u, double * uV, double * uI, gsl_vector *w, gsl_vector *psp, double gE, double gI) {
+void updateMembrane(double * const u, double * const uV, double * const uI, gsl_vector * const w, 
+		    gsl_vector *const psp, const double gE, const double gI) {
 	double v; // to hold gross dendrite potential
 
 // dendritic potential is weighted some of all its PSPs, see eq (7)
@@ -88,10 +89,11 @@ void updateMembrane(double * u, double * uV, double * uI, gsl_vector *w, gsl_vec
    @param pspS 1st filtered psp
    @param pspTilde 2nd filtered psp
    @param pre value 1.0 if there an incoming spike at this instance in
-   time, 0.0 otherwise
-				   @todo rename update PSP?
+   time, 0.0 otherwise (could it also take the value of a rate/membrane potential?
+   @todo rename update PSP?
  */
-void updatePre(double * sue, double * sui, double * psp, double * pspS, double * pspTilde, double pre) {
+void updatePre(double * const sue, double * const sui, double * const psp, 
+	       double * const pspS, double * const pspTilde, const double pre) {
 
 	// Euler integral of first term of \kappa; decays with GAMMA_GL (1/tau_m)
 	*sue = GAMMA_GL * *sue + pre; 
@@ -124,7 +126,7 @@ void updatePre(double * sue, double * sui, double * psp, double * pspS, double *
      @todo look up in Brea's paper or the Uranczik and Senn paper,
      what ALPHA really means.
  */
-void updateWeight(double * w, double rU, double pspTilde, double rV, double psp) {
+void updateWeight(double * const w, const double rU, const double pspTilde, const double rV, const double psp) { 
 	*w += ETA_DT * (ALPHA * rU * pspTilde - rV * psp);
 }
 
@@ -136,7 +138,7 @@ void updateWeight(double * w, double rU, double pspTilde, double rV, double psp)
     @param u [units?] soma potential.
     @return instansaneous spike rate in units of [?] / DT?
  */
-double phi(double u) {
+double phi(const double u) {
 	if(u < 0) return 0;
 	if(u > 1) return PHI_MAX;
 	return PHI_MAX * u;

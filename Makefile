@@ -17,6 +17,8 @@ LIBS = -lgsl -lgslcblas -lm
 #FLAGS = -std=gnu99 -O3
 FLAGS = -std=gnu99 -O0 -g
 
+GSL_RNG_SEED = `data +%N`
+
 # simulation. Why ETA bigger by factor 100 than default?
 rampUp:
 	gcc  $(FLAGS) -D ETA=50 -D FILENAME_POST=\"data/rampUpPost.dat\" -D FILENAME_PRE=\"data/rampUpPre.dat\" -c src/c/rampUp.c -o rampUp.o
