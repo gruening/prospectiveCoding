@@ -146,7 +146,7 @@ for i in xrange(0, nlearn_pred):
   dwpred=dm.dot(amtut_del.T); # dot product? Transponed?
 
   # update inverse weights
-  wpred=wpred+eta_pred*dwpred; # XXX can replace with +=?
+  wpred=wpred+eta_pred*dwpred; # XXX can replace with +=? Probably not!
   
   # Mean squared error in motor estimation per time step and motor
   # neuron 
