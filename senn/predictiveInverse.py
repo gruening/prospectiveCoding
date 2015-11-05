@@ -16,7 +16,7 @@ def delayperm(x,n):  # Circles the columns of matrix x to the right by n columns
 # - rewrite in pyhton.
 
 #nm=200; # number of motor neurons (RA)
-nm=200; # 3 for testing
+nm=7; # 3 for testing, or 7
 nsong=nm; # dimension of song, ie number of "aciustic"/artilatory degrees of freedom"
 na=nm; # number of auditory neurons
 nam=nm; # number of auditory memory neurons which memorize the tutor song (for one time step)
@@ -24,7 +24,8 @@ T=100; # duration of subsongs and of tutor song  [ms?]
 tau=10; # 10 Delay of auditory activity with respect to the generating motor activity (syrinx + auditory pathway) [ms?] -- isnt that rather in the area of 50ms?
 oneStep=1; # Propagation delay of one neuronal connection [ms?]
 nlearn_inv=300; # learning steps for inverse model (ie to learn reverse of "acoustic" mapping)
-nlearn_pred=100; # learning steps for predicitve inverse model (ie to learn direct connections from memory to motor neurons
+nlearn_pred=1; # 100 learning steps for predicitve inverse model (ie to learn direct connections from memory to motor neurons
+#nlearn_pred=1; # for testing inv learning only
 eta_inv=0.002; # learning rate for inverse model
 eta_pred=0.001; # learning rate for predictive inverse model
 epsi=0; # Parameter to regularize the matrices -- not needed?
@@ -64,15 +65,16 @@ Q=A.dot(S); # Total motor to auditory transformation, eg atut=delayperm(Q*mtut,t
 # activity (inverse model) (ie looking for sth like an inverse of Q)
 winv=np.random.randn(nm,na)/sqrt(na); 
 
-# Initialize error value for each learning step (do we need to do this
-# for pyhton?
-
+# Initialize error values for each learning step
 e_inv = np.zeros(nlearn_inv); 
+
+#m=mtut;
 
 for i in xrange(0,nlearn_inv):
 
 # random motor activity to produce the subsong different each epoch.
-  m=np.random.randn(nm,T); 
+  m = mtut + 1/100 * np.random.randn(nm,T); 
+#  m= np.random.randn(nm,T); 
 
   # auditory activity produced by the subsong 
   a=delayperm(Q.dot(m),tau); 
@@ -102,12 +104,13 @@ for i in xrange(0,nlearn_inv):
   e_inv[i]=(sum(dm*dm))/(T*nm); # change from dot product? Probably not.
   
 # print figure;
+
 figure(1);
 plot(e_inv); 
 xlabel('Learning steps'); 
 ylabel('Inverse error');
-title('Inverse error');
-legend('w_{inv}');
+title('Inverse error of motoric activity at RA vs tutor motoric activity via $w_{inv}$');
+legend('SME between tutor motoric and "inverse" activitey');
 
 # 2. Phase
 # learning the predictive inverse model during sleep from internally
@@ -121,9 +124,8 @@ wpred=np.random.randn(nm,nam)/sqrt(nam);
 e_pred=np.zeros(nlearn_pred); 
 
 # motor activity produced by the inverse connections from the
-# rehearsed memory through  the auditory representation (thats where
-# the delay comes from?)
-minv=delayperm(winv.dot(atut),oneStep); # dot product?
+# rehearsed memory through the auditory representation 
+minv=delayperm(winv.dot(atut),oneStep); 
 
 # eligibility trace of length tau+oneStep for synapses from the memory
 # to the motor area 

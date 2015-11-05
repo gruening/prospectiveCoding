@@ -24,7 +24,7 @@ def delayperm(x,n):  # Circles the columns of matrix x to the right by n columns
 # - 2015/11/02  switch driving from direct injection into RA to
 #               injection via HVC -- leads to same error of
 #               causal-inverse learning
-
+# - 2015/11/02  start weight copying in phase 2.
 
 # number of motor neurons (RA)
 n_ra = 50; # 3 for testing, or 7, n_ra=200; 
@@ -45,15 +45,15 @@ T = 100;
 tau = 10; 
 
 # learning steps for model 
-n_learn=300; 
+n_learn = 300; 
 
 # 100 learning steps for predicitve inverse model (ie to learn direct
 # connections from memory to motor neurons TO BE DELETED
 nlearn_pred=1; 
 
-eta_lman=0.002; # learning rate for inverse model via lman.
+eta_lman = 0.002; # learning rate for inverse model via lman.
 
-eta_pred=0.001; # learning rate for predictive inverse model TO BE DELETED.
+eta_pred = 0.001; # learning rate for predictive inverse model TO BE DELETED.
 
 epsi = 0; # Parameter to regularize the matrices -- not needed?
 
@@ -76,14 +76,9 @@ song_aud_tut = A.dot(song_sound_tut);
 
 
 
-# Phase B:
-# learning the inverse model from  babbling a subsong and
-# trying to reproduce the motor pattern it generated (phase 1)  
-# ie this is prospective learning.
-
 # initial weight matrix converting the auditory representation from
 # LMAN into RA motor activity (inverse model) 
-w_lman = np.random.randn(n_ra,n_aud)/sqrt(n_aud); 
+w_lman = np.random.randn(n_ra,n_aud) / sqrt(n_aud); 
 
 
 # initial weight matrix from HVC to RA:
@@ -97,44 +92,61 @@ e_lman_sound = np.zeros(n_learn);
 e_lman_sound2 = np.zeros(n_learn);
 
 
-# fixed activity drives RA during imitation learning: 
-ra_soma=w_hvc.dot(song_sound_tut);
 
 for i in xrange(0,n_learn):
 
-  # auditory activity produced by the subsong 
-  aud_soma=delayperm(Q.dot(ra_soma),tau); 
+    # Phase B:
+    # learning the inverse model from  babbling a subsong from HVC 
+    # trying to reproduce the motor pattern it generated  
+    # ie this is prospective learning.
 
-  # motor activity predicted from the auditory activity
-  ra_pred=w_lman.dot(aud_soma); 
+    # fixed activity drives RA during imitation learning: 
+    ra_soma=w_hvc.dot(song_aud_tut); # erronously I had driven here
+    # from song_sound_tut which let to a lower error? Is thsi a matter
+    # of scaling? and I also get overlows nw with the correct
+    # song_aud_tut. Scaling of Q, A, S?
+
+    # auditory activity produced by the subsong 
+    aud_soma=delayperm(Q.dot(ra_soma),tau); 
+
+    # motor activity predicted from the auditory activity
+    ra_pred=w_lman.dot(aud_soma); 
   
-  # Difference between actual RA activity and predicted (via lman):
-  diff_ra_lman=(delayperm(ra_soma,tau)-ra_pred); 
+    # Difference between actual RA activity and predicted (via lman):
+    diff_ra_lman=(delayperm(ra_soma,tau)-ra_pred); 
 
-  sound_pred = S.dot(ra_pred); # from lman activity.
+    sound_pred = S.dot(ra_pred); # from lman activity.
+    
+    diff_sound_lman = (delayperm(S.dot(ra_soma),tau) - sound_pred);
+    diff_sound_tut = (delayperm(song_sound_tut,tau) - sound_pred);
 
-  diff_sound_lman = (delayperm(S.dot(ra_soma),tau) - sound_pred);
-  diff_sound_tut = (delayperm(song_sound_tut,tau) - sound_pred);
+    # weight change: dw = (m_t-Delta - ra_pred_t) * a (postdictive
+    # learning, need trace of prior motor activity) for weights from
+    # auditory to motoric representation.
+    dw_lman=diff_ra_lman.dot(aud_soma.T); 
 
+    # apply weight change
+    w_lman=w_lman+eta_lman*dw_lman; 
 
-
-  # weight change: dw = (m_t-Delta - ra_pred_t) * a (postdictive
-  # learning, need trace of prior motor activity) for weights from
-  # auditory to motoric representation.
-  dw_lman=diff_ra_lman.dot(aud_soma.T); 
-
-  # apply weight change
-  w_lman=w_lman+eta_lman*dw_lman; 
-
-  # Mean squared error in motor estimation per time step and motor
-  # neuron 
-  e_lman_ra[i]=(sum(diff_ra_lman*diff_ra_lman))/(T*n_ra);  # motoric
-  e_lman_sound[i]=(sum(diff_sound_lman*diff_sound_lman))/(T*n_sound);  # in sound domain
-  # in sound domain # in sound domain between lman predicted and tutor sound
-  e_lman_sound2[i]=(sum(diff_sound_tut*diff_sound_tut))/(T*n_sound);  
-
-  # This was Phase B -- inverse learning.
+    # Mean squared error in motor estimation per time step and motor
+    # neuron 
+    e_lman_ra[i]=(sum(diff_ra_lman*diff_ra_lman))/(T*n_ra);  # motoric
+    e_lman_sound[i]=(sum(diff_sound_lman*diff_sound_lman))/(T*n_sound);  # in sound domain
+    # in sound domain # in sound domain between lman predicted and tutor sound
+    e_lman_sound2[i]=(sum(diff_sound_tut*diff_sound_tut))/(T*n_sound);  
+    
+    # This was Phase B -- inverse learning.
   
+    # Now Phase C -- weight copying.
+    # - driving from LMAN
+    # - no actual acoustic feedback
+    # - connections from HVC to RA are learning
+    # as a consequence e_lman_sound2 should go down.
+    
+#    lman_soma = 
+
+#    ra_dend_lman = 
+
 
 
   
