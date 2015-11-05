@@ -59,7 +59,7 @@ eta_lman = 0.002; # learning rate for inverse model via lman.
 
 eta_hvc = 0.001; # learning rate for weight copying
 
-epsi = 1/10000; # Parameter to regularize the matrices to avoid near
+epsi = 1/1000; # Parameter to regularize the matrices to avoid near
 # zero EV -- bad for inversion.
 
 # syrinx; converts the RA motor activity signal m into a sound (here just matrix)
@@ -91,6 +91,8 @@ e_lman_ra = np.zeros(n_learn);
 e_lman_sound = np.zeros(n_learn);
 e_lman_sound2 = np.zeros(n_learn);
 e_weight = np.zeros(n_learn);
+e_potential = np.zeros(n_learn);
+e_hvc_sound = np.zeros(n_learn);
 
 for i in xrange(0,n_learn):
 
@@ -99,13 +101,9 @@ for i in xrange(0,n_learn):
     # trying to reproduce the motor pattern it generated  
     # ie this is prospective learning.
 
-    # fixed activity drives RA during imitation learning: 
-    ra_soma=w_hvc.dot(song_aud_tut); # erronously I had driven here
-#    ra_soma=w_hvc.dot(song_sound_tut); # erronously I had driven here
-    # from song_sound_tut which let to a lower error? Is thsi a matter
-    # of scaling? and I also get overlows nw with the correct
-    # song_aud_tut. Scaling of Q, A, S?
-    # das passiert by 50
+    # fixed activity drives RA during imitation learning -- driving
+    # from HVC:
+    ra_soma=w_hvc.dot(song_aud_tut); 
 
     # auditory activity produced by the subsong 
     aud_soma=delayperm(Q.dot(ra_soma),tau); 
@@ -138,6 +136,9 @@ for i in xrange(0,n_learn):
     
     # This was Phase B -- inverse learning.
   
+    # we should perhaps clear here the local variables (or use a
+    # function anyway)
+
     # Now Phase C -- weight copying.
     # - driving from LMAN
     # - no actual acoustic feedback
@@ -151,13 +152,25 @@ for i in xrange(0,n_learn):
     pre_hvc = hvc_soma;
     ra_dend_hvc =  w_hvc.dot(hvc_soma);  
 
-    dw_hvc = (ra_soma - ra_dend_hvc).dot(pre_hvc.T)
+    diff_hvc = ra_soma - ra_dend_hvc
+
+    dw_hvc = (diff_hvc).dot(pre_hvc.T)
     
     w_hvc = w_hvc + eta_hvc * dw_hvc; # for some reason += does not
     # deliver the result I want (probaly a problem with reference vs
     # value)  
 
     e_weight[i] = sum((w_hvc - w_lman)*(w_hvc - w_lman)) / (T*n_lman*n_ra);
+    e_potential[i] = sum(diff_hvc*diff_hvc) / (T*n_ra);
+
+    
+    sound_hvc = S.dot(ra_soma);
+    diff_sound_hvc = song_sound_tut - sound_hvc;
+    e_hvc_sound[i]=(sum(diff_sound_hvc*diff_sound_hvc))/(T*n_sound);  # in sound domain
+
+    
+
+
 
 #    e_weights[i]=(sum(d_weights*d_weights))/(T*n_hvc*n_ra); 
 
@@ -180,7 +193,6 @@ ylabel('Error');
 title('Inverse error between sound produced via actual RA vs predicitdc motoric activity via LMAN$');
 legend('SME between actual sound and sound predicted by via LMAN');
 
-
 figure(3);
 plot(e_lman_sound2); 
 xlabel('Learning steps'); 
@@ -195,4 +207,16 @@ ylabel('Error');
 title('Difference between HVC and LMAN weights');
 legend('Weights');
 
+figure(5);
+plot(e_potential); 
+xlabel('Learning steps'); 
+ylabel('Error');
+title('Difference of potential to be copied');
+legend('Copy potentials');
 
+figure(6);
+plot(e_hvc_sound); 
+xlabel('Learning steps'); 
+ylabel('Error');
+title('Difference between HVC song and tutor song');
+legend('HVC - Tutor Song');
