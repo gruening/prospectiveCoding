@@ -1,5 +1,8 @@
 #!/usr/bin/python
 
+# \todo: - how is rand initialised -- it seems always the same?
+
+
 import numpy as np
 from scitools.std import *
 
@@ -27,7 +30,8 @@ def delayperm(x,n):  # Circles the columns of matrix x to the right by n columns
 # - 2015/11/02  start weight copying in phase 2.
 
 # number of motor neurons (RA)
-n_ra = 50; # 3 for testing, or 7, n_ra=200; 
+n_ra = 50; # 3 for testing, or 7, n_ra=200; , currently 50 for testing
+# on train
 
 # dimension of song, ie number of "acoustic" degrees of freedom"
 n_sound = n_ra; 
@@ -36,7 +40,7 @@ n_sound = n_ra;
 n_aud = n_ra; 
 
 # number of auditory memory neurons which memorize the tutor song (for one time step)
-n_mem = n_ra; 
+n_lman = n_ra; 
 
 # duration of subsongs and of tutor song  [ms?]
 T = 100; 
@@ -53,9 +57,10 @@ nlearn_pred=1;
 
 eta_lman = 0.002; # learning rate for inverse model via lman.
 
-eta_pred = 0.001; # learning rate for predictive inverse model TO BE DELETED.
+eta_hvc = 0.001; # learning rate for weight copying
 
-epsi = 0; # Parameter to regularize the matrices -- not needed?
+epsi = 1/10000; # Parameter to regularize the matrices to avoid near
+# zero EV -- bad for inversion.
 
 # syrinx; converts the RA motor activity signal m into a sound (here just matrix)
 S = (np.random.randn(n_sound,n_ra) + epsi*np.eye(n_ra)) / sqrt(n_ra);
@@ -74,24 +79,18 @@ song_sound_tut = np.random.randn(n_ra,T);
 # tutor song, or by rehearsing of the memory this is our imprint.
 song_aud_tut = A.dot(song_sound_tut);
 
-
-
 # initial weight matrix converting the auditory representation from
 # LMAN into RA motor activity (inverse model) 
 w_lman = np.random.randn(n_ra,n_aud) / sqrt(n_aud); 
 
-
 # initial weight matrix from HVC to RA:
-w_hvc=np.random.randn(n_ra,n_mem)/sqrt(n_mem); 
-
-
+w_hvc=np.random.randn(n_ra,n_lman)/sqrt(n_lman); 
 
 # Initialize error values for each learning step
 e_lman_ra = np.zeros(n_learn); 
 e_lman_sound = np.zeros(n_learn);
 e_lman_sound2 = np.zeros(n_learn);
-
-
+e_weight = np.zeros(n_learn);
 
 for i in xrange(0,n_learn):
 
@@ -102,9 +101,11 @@ for i in xrange(0,n_learn):
 
     # fixed activity drives RA during imitation learning: 
     ra_soma=w_hvc.dot(song_aud_tut); # erronously I had driven here
+#    ra_soma=w_hvc.dot(song_sound_tut); # erronously I had driven here
     # from song_sound_tut which let to a lower error? Is thsi a matter
     # of scaling? and I also get overlows nw with the correct
     # song_aud_tut. Scaling of Q, A, S?
+    # das passiert by 50
 
     # auditory activity produced by the subsong 
     aud_soma=delayperm(Q.dot(ra_soma),tau); 
@@ -143,9 +144,22 @@ for i in xrange(0,n_learn):
     # - connections from HVC to RA are learning
     # as a consequence e_lman_sound2 should go down.
     
-#    lman_soma = 
+    lman_soma = song_aud_tut;
+    ra_soma = w_lman.dot(song_aud_tut);
 
-#    ra_dend_lman = 
+    hvc_soma = song_aud_tut;
+    pre_hvc = hvc_soma;
+    ra_dend_hvc =  w_hvc.dot(hvc_soma);  
+
+    dw_hvc = (ra_soma - ra_dend_hvc).dot(pre_hvc.T)
+    
+    w_hvc = w_hvc + eta_hvc * dw_hvc; # for some reason += does not
+    # deliver the result I want (probaly a problem with reference vs
+    # value)  
+
+    e_weight[i] = sum((w_hvc - w_lman)*(w_hvc - w_lman)) / (T*n_lman*n_ra);
+
+#    e_weights[i]=(sum(d_weights*d_weights))/(T*n_hvc*n_ra); 
 
 
 
@@ -159,7 +173,7 @@ ylabel('Error');
 title('Inverse error of forced motoric activity at RA vs predicted motoric activity via LMAN$');
 legend('SME between tutor motoric and "inverse" activitey via LMAN');
 
-figure(6);
+figure(2);
 plot(e_lman_sound); 
 xlabel('Learning steps'); 
 ylabel('Error');
@@ -167,121 +181,18 @@ title('Inverse error between sound produced via actual RA vs predicitdc motoric 
 legend('SME between actual sound and sound predicted by via LMAN');
 
 
-figure(7);
+figure(3);
 plot(e_lman_sound2); 
 xlabel('Learning steps'); 
 ylabel('Error');
 title('Inverse error between sound predicited motoric activity via LMAN to tutor song');
 legend('SME between actual sound and sound predicted by via LMAN');
 
-
-
-
-
-
-#exit();
-
-# 2. Phase
-# learning the predictive inverse model during sleep from internally
-# rehearsing the tutor song (phase 2) -- ie trying weights from memory
-# to RA.
-
-
-# Initialize error value for each learning step
-e_pred=np.zeros(nlearn_pred); 
-
-# motor activity produced by the inverse connections from the
-# rehearsed memory through the auditory representation 
-ra_pred=delayperm(w_lman.dot(song_aud_tut),0); 
-
-# eligibility trace of length tau+0 for synapses from the memory
-# to the motor area 
-song_aud_tut_del=delayperm(song_aud_tut,tau+2*0); 
-
-
-for i in xrange(0, nlearn_pred):
-
-  # delayed silent input from the auditory memory 
-  mpred=w_hvc.dot(song_aud_tut_del); 
-
-  # estimation error; 
-  diff_ra_lman=(ra_pred-mpred); 
-
-  # learning rule for inverse weights
-  # THis is for the connections from the memory direct to RA
-  # m_inv - m_pred)*am -- normal instantanous learning.
-  dw_hvc=diff_ra_lman.dot(song_aud_tut_del.T); # dot product? Transponed?
-
-  # update inverse weights
-  w_hvc=w_hvc+eta_pred*dw_hvc; # XXX can replace with +=? Probably not!
-  
-  # Mean squared error in motor estimation per time step and motor
-  # neuron 
-  e_pred[i]=sum(diff_ra_lman*diff_ra_lman)/(T*n_ra); 
-
-# make the figure:
-figure(2);
-plot(e_pred); 
-xlabel('Learning steps'); 
-ylabel('Predictive error');
-legend('$w_{pred}$');
-
-
-# 3. Phase
-# %%%% to test Adult song production
-
-# Auditory activity generated by the inverse model, but not delayed by
-# the song production + audit. pathway:
-atinv=delayperm(Q.dot(w_lman).dot(song_aud_tut),0); # does this keep the correct
-# order of things? - ja, denn matrix multiplications is associative.
-
-# Auditory activity in the memory area generated by the predictive inverse model
-amtpred=delayperm(Q.dot(w_hvc).dot(song_aud_tut),tau); # why do I need tau here, but
-# not above?
-
-# Comparison between memorized and generated auditory activity
-
-# Select a random auditory neuron
-i=floor(np.random.rand()*n_aud);
-
-figure(3);
-clf;
-#plot([song_aud_tut(i,:);atinv(i,:)]) # this could need a change as well from
-
-plot(song_aud_tut[i])
-hold("on");
-plot(atinv[i,:])
-hold("off");
-legend("song_aud_tut", "atinv");
- # this could need a change as well from
-# semicolon to coma.
-xlabel('time steps'); 
-title("Activity of one auditory neuron recieved if song generarted via \
-the inverse model from auditory respresentation"); # ie a test how good an inverse of Q
-# w_inv has become.
-#r = corr(song_aud_tut(:),atinv(:));
-#r = np.corrcoef(song_aud_tut[:],atinv[:])[0,1];
-#fprintf('Corr. coeff. inv. model: %.4f\n',r);
-
 figure(4);
-clf;
-plot(song_aud_tut[i])
-hold("on");
-plot(amtpred[i]);
-xlabel('Time Steps'); 
-title('Activity of one memory neuron generated by the predictive inverse model');
-legend("song_aud_tut", "amtpred");
-hold("off");
-
-
-#r=corrcoef(song_aud_tut[:],amtpred[:]);
-#fprintf('Corr. coeff. predictive inv. model: %.4f\n',r);
-# ie a good an inverse of Q the preditictve pathway has become.
-
-# Playback test
-#%mplayback=w_hvc*delayperm(A*song_tut,0); % Takes auditory response in memory area during playback, an#d produces the motor sequence out of that
-#%msong=w_hvc*delayperm(song_aud_tut,0); % The song generated motor sequence is trivially the same here becaus#e we assumed perfect memory, i.e. song_aud_tut=A*song
-#%figure();clf;plot([mplayback(i,:); mplayback(i,:)]')
-#%xlabel('time steps'); title('Mirroring is trivial because M has same drive during singing and playback');
+plot(e_weight); 
+xlabel('Learning steps'); 
+ylabel('Error');
+title('Difference between HVC and LMAN weights');
+legend('Weights');
 
 
