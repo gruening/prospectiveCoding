@@ -64,12 +64,14 @@ n_learn = 3000; # learning steps for inverse model (consisting of one
 eta_hvc = 0.001 # 0.001; # learning rate for inverse model, started with 0.001
 eta_lman = 0.002; # learning rate for predictive inverse model with 0.002
 
+epsi = 1/1000;
+
 # syrinx; converts the motor activity signal m into a sound (here just matrix)
-S = np.random.randn(n_song,n_ra) / sqrt(n_song);
+S = (np.random.randn(n_song,n_ra) + epsi*np.eye(n_ra)) / sqrt(n_song);
 
 # auditory pathway; converts the song into an auditory signal (here
 # just a matrix) -- lman here correct.
-A = np.random.randn(n_lman,n_song) / sqrt(n_song); 
+A = (np.random.randn(n_lman,n_song) + epsi*np.eye(n_ra)) / sqrt(n_song); 
 
 # total operator for mapping from RA to Aud:
 Q = A.dot(S); # Total motor to auditory transformation, 
