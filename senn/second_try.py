@@ -41,7 +41,7 @@ def delayperm(x,n):  # Circles the columns of matrix x to the right by n columns
 #               in Phase B
 
 # number of motor neurons (RA)
-n_ra = 200; # 3 for testing, or 7, n_ra=200; , currently 50 for testing,
+n_ra = 50; # 3 for testing, or 7, n_ra=200; , currently 50 for testing,
 # fine for 1,2 neurons, but from 3 onwords, it separates
 # on train
 
@@ -111,14 +111,11 @@ e_lman_sound2 = np.zeros(n_learn);
 e_potential = np.zeros(n_learn);
 e_hvc_sound = np.zeros(n_learn);
 
-#def causal_inverse():
+n_pretraining = 1; #1000;
 
- #   return;
+def phaseC0(): 
 
-n_pretraining = 0; #1000;
-
-# Phase C0: Like Phase C, but with only random input to RA:
-for i in xrange(0,n_pretraining):
+    global w_lman;
 
     # Phase C -- Causal Inverse Learning.
     # "learning the inverse model from  babbling not even a subsong.
@@ -128,8 +125,6 @@ for i in xrange(0,n_pretraining):
     # - LMAN dendrite subject to shunting inhibtion, ie RA soma is
     #   equal to potential of HVC dendrite.
     # - HVC not learning, not active?
-
-    #  causal_inverse();
 
     # Random drive on  RA during imitation learning
     ra_soma = w_hvc.dot(hvc_soma) #+ 1/100 * np.random.randn(n_ra,
@@ -169,7 +164,16 @@ for i in xrange(0,n_pretraining):
     # neuron 
     # e_lman_ra[i]=(sum(diff_ra_lman*diff_ra_lman))/(T*n_ra);  #
 
-for i in xrange(0,n_learn):
+
+
+
+# Phase C0: Like Phase C, but with only random input to RA:
+for _ in xrange(0,n_pretraining):
+    phaseC0();
+
+def phaseC(): # causal inverse learning
+
+    global w_lman
 
     # Phase C -- Causal Inverse Learning.
     # "learning the inverse model from  babbling a subsong from HVC"
@@ -187,6 +191,7 @@ for i in xrange(0,n_learn):
     # HVC drives RA during imitation learning
 #    ra_soma = w_hvc.dot(hvc_soma) #+ 1/100 * np.random.randn(n_ra,
 #    n_hvc); # makes no differences
+
 
     y = 0.0 # setting this to values different from zero makes it wrse
     ra_soma = (1-y) * w_hvc.dot(hvc_soma) # + y*lman_soma;
@@ -242,6 +247,13 @@ for i in xrange(0,n_learn):
     # we should perhaps clear here the local variables (or use a
     # function anyway)
 
+    # print i
+
+
+def phaseB():
+
+    global w_hvc
+
     # Now Phase B -- weight copying.
     # - driving from LMAN from sound memory
     # - no actual acoustic feedback
@@ -280,6 +292,15 @@ for i in xrange(0,n_learn):
     # dendrite from HVC -- a measure that copy learning works:
     e_potential[i] = sum(diff_hvc*diff_hvc) / (T*n_ra);
 
+
+for i in xrange(0,n_learn):
+
+    phaseC(); # causal inverse on HVC-song
+
+#for i in xrange(0,n_learn):
+
+    phaseB(); # acitivity copying from LMAN to HVC
+
     
 #    sound_lman = S.dot(ra_soma); ## NoNo, this is the lman sound that
     ## would have been produced by lman if we allow the bird to sing
@@ -287,19 +308,13 @@ for i in xrange(0,n_learn):
 #    e_hvc_sound[i]=(sum(diff_sound_lman*diff_sound_lman))/(T*n_sound);  # in sound domain
 
     
-#    e_weights[i]=(sum(d_weights*d_weights))/(T*n_hvc*n_ra); 
-
-# print figures;
+# print figures:
 
 figure(1);
 clf();
-#title('Birdsong learning');
+title('Birdsong learning');
 xlabel('Steps'); 
 ylabel('SME');
-
-#plot(e_lman_ra); 
-#legend('SME between tutor motoric and "inverse" activity via LMAN');
-#figure(2);
 
 plot(e_lman_sound); 
 legend('Phase C: Causal Inverse Learning: HVC-song vs predicated song from LMAN)');
@@ -309,19 +324,8 @@ hold("on");
 plot(e_lman_sound2); 
 legend('Phase C+B: Causal Inverse + Weight Copying: Tutor sound vs predicted (by LMAN)');
 
-#hold("off");
-
-
-#figure(2);
-#clf();
-#title('Birdsong learning');
-#xlabel('Steps'); 
-#ylabel('SME');
-
 plot(e_hvc_sound); 
 legend('Tutor song vs actual performed song (by HVC)');
-
-#hold("on")
 
 plot(e_potential); 
 legend('Phase B: Activity copying from LMAN to HVC');
@@ -329,13 +333,3 @@ legend('Phase B: Activity copying from LMAN to HVC');
 hold("off")
 
 hardcopy("imitation_learning.png");
-
-
-# This figure does not make sense anymore as there is not explicit
-# identifcal representation of memory in HVC and LMAN   
-# figure(2);
-# plot(e_weight); 
-# xlabel('Learning steps'); 
-# ylabel('Error');
-# title('Difference between HVC and LMAN weights');
-# legend('Weights');
