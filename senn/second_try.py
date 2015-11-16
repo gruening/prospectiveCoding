@@ -117,10 +117,10 @@ e_hvc_sound = np.zeros(n_learn);
 
 n_pretraining = 0; #1000;
 
-# Phase B0: Like Phase B, but with only random input to RA:
+# Phase C0: Like Phase C, but with only random input to RA:
 for i in xrange(0,n_pretraining):
 
-    # Phase B -- Causal Inverse Learning.
+    # Phase C -- Causal Inverse Learning.
     # "learning the inverse model from  babbling not even a subsong.
     # - random driving, 
     # - LMAN reflects auditory input,
@@ -171,7 +171,7 @@ for i in xrange(0,n_pretraining):
 
 for i in xrange(0,n_learn):
 
-    # Phase B -- Causal Inverse Learning.
+    # Phase C -- Causal Inverse Learning.
     # "learning the inverse model from  babbling a subsong from HVC"
     # trying to reproduce the motor pattern it generated  
     # ie this is prospective learning.
@@ -237,12 +237,12 @@ for i in xrange(0,n_learn):
     diff_sound_hvc = S.dot(ra_soma) - song_sound_tut;
     e_hvc_sound[i] = sum(diff_sound_hvc*diff_sound_hvc)/ (T*n_sound);
 
-     # This was Phase B -- inverse learning
+     # This was Phase C -- inverse learning
   
     # we should perhaps clear here the local variables (or use a
     # function anyway)
 
-    # Now Phase C -- weight copying.
+    # Now Phase B -- weight copying.
     # - driving from LMAN from sound memory
     # - no actual acoustic feedback
     # - connections from HVC to RA are learning
@@ -302,12 +302,12 @@ ylabel('SME');
 #figure(2);
 
 plot(e_lman_sound); 
-legend('Phase B: Causal Inverse Learning: HVC-song vs predicated song from LMAN)');
+legend('Phase C: Causal Inverse Learning: HVC-song vs predicated song from LMAN)');
 
 hold("on");
 
 plot(e_lman_sound2); 
-legend('Phase B+C: Causal Inverse + Weight Copying: Tutor sound vs predicted (by LMAN)');
+legend('Phase C+B: Causal Inverse + Weight Copying: Tutor sound vs predicted (by LMAN)');
 
 #hold("off");
 
@@ -324,7 +324,7 @@ legend('Tutor song vs actual performed song (by HVC)');
 #hold("on")
 
 plot(e_potential); 
-legend('Phase C: Activity copying from LMAN to HVC');
+legend('Phase B: Activity copying from LMAN to HVC');
 
 hold("off")
 
