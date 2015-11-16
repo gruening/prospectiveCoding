@@ -4,6 +4,11 @@
 # \todo: - sth is rotton with the plotting. Errors stay the same
 #          between HVC-driven and Tutor song since the introduction of
 #           copy learning
+# \todo: 1. von LMAN singen ausprobieren, 
+#        3. es beides einfach nacheinandern ausprobieren.
+#        4. im octave code von walter, das zufälige stammeln durch HVC input ersetzen.
+#        5. optimale rate für HVC gewichte ist analytisch klar
+
 
 import numpy as np
 from scitools.std import *
@@ -32,10 +37,12 @@ def delayperm(x,n):  # Circles the columns of matrix x to the right by n columns
 # - 2015/11/02  start weight copying in phase 2 -- problem is still that the overall error does not go down.
 # - 2015/11/02  HVC branch: implement HVC as a clock.
 # - 2015/11/10  rectify plots and legends
-#                
+# - 2015/11/10  implement convex mixture of memory and auditory input
+#               in Phase B
 
 # number of motor neurons (RA)
-n_ra = 50; # 3 for testing, or 7, n_ra=200; , currently 50 for testing
+n_ra = 200; # 3 for testing, or 7, n_ra=200; , currently 50 for testing,
+# fine for 1,2 neurons, but from 3 onwords, it separates
 # on train
 
 # dimension of song, ie number of "acoustic" degrees of freedom"
@@ -55,7 +62,8 @@ T = 100;
 n_hvc = T;
 
 # Delay of auditory activity with respect to the generating motor activity (syrinx + auditory pathway) [ms?] -- isnt that rather in the area of 50ms-70ms?
-tau = 7; 
+tau = 7; # 7 orig, 0 for testing purposes, but this does not change
+# anything, so timings are alright 
 
 # learning steps for model 
 n_learn = 300; 
@@ -96,7 +104,7 @@ w_hvc = np.random.randn(n_ra, n_hvc);
 hvc_soma = np.eye(n_hvc, T);
 
 # Initialize error values for each learning step
-# e_lman_ra = np.zeros(n_learn); 
+e_lman_ra = np.zeros(n_learn); 
 e_lman_sound = np.zeros(n_learn);
 e_lman_sound2 = np.zeros(n_learn);
 #e_weight = np.zeros(n_learn);
@@ -107,6 +115,59 @@ e_hvc_sound = np.zeros(n_learn);
 
  #   return;
 
+n_pretraining = 0; #1000;
+
+# Phase B0: Like Phase B, but with only random input to RA:
+for i in xrange(0,n_pretraining):
+
+    # Phase B -- Causal Inverse Learning.
+    # "learning the inverse model from  babbling not even a subsong.
+    # - random driving, 
+    # - LMAN reflects auditory input,
+    # - LMAN synapse is learning the inverse model.
+    # - LMAN dendrite subject to shunting inhibtion, ie RA soma is
+    #   equal to potential of HVC dendrite.
+    # - HVC not learning, not active?
+
+    #  causal_inverse();
+
+    # Random drive on  RA during imitation learning
+    ra_soma = w_hvc.dot(hvc_soma) #+ 1/100 * np.random.randn(n_ra,
+        #    n_hvc); # makes no differences
+
+    # auditory activity produced by the random activity:
+    aud_soma = delayperm(Q.dot(ra_soma),tau); 
+
+    lman_soma = aud_soma
+
+    # motor activity predicted from the auditory activity (ie
+    # potential on RA dendrite from LMAN:
+    ra_pred = w_lman.dot(lman_soma); 
+
+    # sound predicted from LMAN activity:
+    sound_pred = S.dot(ra_pred); 
+
+    # Difference between actual RA activity and predicted (via lman)
+    # for learning rule:
+    diff_ra_lman=(delayperm(ra_soma, tau) - ra_pred); 
+
+    # Difference between LMAN-predicted song activty and actual HVC song:
+    diff_sound_lman = (delayperm(S.dot(ra_soma),tau) - sound_pred);
+
+    # Difference between LMAN-predicted song activity and actual tutor song:
+    diff_sound_tut = (delayperm(song_sound_tut,tau) - sound_pred);
+
+    # weight change: dw = (m_t-Delta - ra_pred_t) * a (postdictive
+    # learning, need trace of prior motor activity) for weights from
+    # auditory to motoric representation.
+    dw_lman=diff_ra_lman.dot(aud_soma.T); 
+
+    # apply weight change
+    w_lman=w_lman+eta_lman*dw_lman; 
+
+    # Mean squared error in motor estimation per time step and motor
+    # neuron 
+    # e_lman_ra[i]=(sum(diff_ra_lman*diff_ra_lman))/(T*n_ra);  #
 
 for i in xrange(0,n_learn):
 
@@ -124,14 +185,21 @@ for i in xrange(0,n_learn):
     #  causal_inverse();
 
     # HVC drives RA during imitation learning
-    ra_soma = w_hvc.dot(hvc_soma) 
+#    ra_soma = w_hvc.dot(hvc_soma) #+ 1/100 * np.random.randn(n_ra,
+#    n_hvc); # makes no differences
+
+    y = 0.0 # setting this to values different from zero makes it wrse
+    ra_soma = (1-y) * w_hvc.dot(hvc_soma) # + y*lman_soma;
 
     # auditory activity produced by the sub song 
     aud_soma = delayperm(Q.dot(ra_soma),tau); 
 
+    x = 0.0
+    lman_soma = (1-x) * aud_soma  + x* delayperm(song_aud_tut, tau);
+
     # motor activity predicted from the auditory activity (ie
     # potential on RA dendrite from LMAN:
-    ra_pred = w_lman.dot(aud_soma); 
+    ra_pred = w_lman.dot(lman_soma); 
 
     # sound predicted from LMAN activity:
     sound_pred = S.dot(ra_pred); 
@@ -259,6 +327,9 @@ plot(e_potential);
 legend('Phase C: Activity copying from LMAN to HVC');
 
 hold("off")
+
+hardcopy("imitation_learning.png");
+
 
 # This figure does not make sense anymore as there is not explicit
 # identifcal representation of memory in HVC and LMAN   
