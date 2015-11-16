@@ -1,13 +1,14 @@
 #!/usr/bin/python
 
 # \todo: - how is rand initialised -- it seems always the same sequence? Seed it?
-# \todo: - sth is rotton with the plotting. Errors stay the same
-#          between HVC-driven and Tutor song since the introduction of
+# \todo: - Tutor-HVC Errors stay the same between HVC-driven and Tutor song since the introduction of
 #           copy learning
-# \todo: 1. von LMAN singen ausprobieren, 
-#        3. es beides einfach nacheinandern ausprobieren.
-#        4. im octave code von walter, das zufälige stammeln durch HVC input ersetzen.
-#        5. optimale rate für HVC gewichte ist analytisch klar
+# \todo: 4. im octave code von walter, das zufälige stammeln durch HVC input ersetzen.
+# \todo: - try with a regularisation
+# \todo: - look at the system as a dynamical system
+# \todo: - why does it not work if we have a local dimenospnal bottleneck in n_sound?
+# \todo: - send the code to Walter (eg the g
+
 
 
 import numpy as np
@@ -44,7 +45,7 @@ def delayperm(x,n):  # Circles the columns of matrix x to the right by n columns
 n_sound = 50; 
 
 # number of motor neurons (RA)
-n_ra = n_sound; # 3 for testing, or 7, n_ra=200; , currently 50 for testing,
+n_ra = n_sound # 3 for testing, or 7, n_ra=200; , currently 50 for testing,
 # fine for 1,2 neurons, but from 3 onwords, it separates
 # on train
 
@@ -73,15 +74,17 @@ eta_lman = 0.002 # 0.002; # learning rate for inverse model via lman -- that
 # seems to be sufficient
 eta_hvc = 1 # 0.01; # learning rate for weight copying orig = 0.001 = 1 ist one shot learning
 
-epsi = 1; # 1/10; # Parameter to regularize the matrices to avoid near
+epsi = 1/10; # 1/10; # Parameter to regularize the matrices to avoid near
 # zero EV -- bad for inversion.
 
 # syrinx; converts the RA motor activity signal m into a sound (here just matrix)
 S = (np.random.randn(n_sound,n_ra) + epsi*np.eye(n_sound,n_ra)) / sqrt(n_ra);
+#S = (np.random.randn(n_sound,n_ra).clip(0,10) #+ epsi*np.ones((n_sound,n_ra))) / sqrt(n_ra);
 
 # auditory pathway; converts the song into an auditory signal for aud
 # neurons (here just a matrix)
 A = (np.random.randn(n_aud, n_sound) + epsi*np.eye(n_aud, n_sound)) / sqrt(n_sound); 
+#A = (np.random.randn(n_aud, n_sound).clip(0,10) #+ epsi*np.ones((n_aud, n_sound))) / sqrt(n_sound); 
 
 # Total motor to auditory transformation. 
 Q=A.dot(S); 
@@ -95,10 +98,9 @@ song_aud_tut = A.dot(song_sound_tut);
 
 # initial weight matrix converting the auditory representation from
 # LMAN into RA motor activity (inverse model) 
-w_lman = np.linalg.inv(Q)
-
-
-# w_lman =np.random.randn(n_ra,n_aud) / sqrt(n_aud); 
+R = np.linalg.inv(Q)
+w_lman =np.random.randn(n_ra,n_aud) / sqrt(n_aud); 
+# w_lman = R
 
 # some size as length of song.
 w_hvc = np.random.randn(n_ra, n_hvc);
@@ -109,7 +111,7 @@ e_lman_sound = np.zeros(n_learn);
 e_potential = np.zeros(n_learn);
 e_hvc_sound = np.zeros(n_learn);
 
-n_pretraining = 1000; #1000;
+n_pretraining =  0 # 1000; #1000;
 
 def phaseC0(): 
 
@@ -124,8 +126,9 @@ def phaseC0():
     # - HVC not learning.
 
     # Random drive on  RA during imitation learning
-    ra_soma = w_hvc.dot(hvc_soma) #+ 1/100 * np.random.randn(n_ra,
-        #    n_hvc); # makes no differences
+    ra_soma = w_hvc.dot(hvc_soma); # + 1/100 * np.random.randn(n_ra, T); 
+#    ra_soma = np.random.randn(n_ra,T);
+    
 
     # auditory activity produced by the random activity:
     aud_soma = delayperm(Q.dot(ra_soma),tau); 
@@ -187,7 +190,7 @@ def phaseC(): # causal inverse learning
     # auditory activity produced by the sub song 
     aud_soma = delayperm(Q.dot(ra_soma),tau); 
 
-    x = 0.0
+    x = 0
     lman_soma = (1-x) * aud_soma  + x* delayperm(song_aud_tut, tau);
 
     # motor activity predicted from the auditory activity (ie
