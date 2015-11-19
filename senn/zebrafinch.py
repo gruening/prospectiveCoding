@@ -1,27 +1,13 @@
 #!/usr/bin/python
 
-# The copying part works, but the inverse part does not work, 
-# - however that worked in inverse thingy -- so I should have a look there.
 # - is Doupe ein homeostatischer Effect?
-# - where does the time shift come from? It has no functional explanation.
-# - we can simplify code by taking out tau shifting of matrices.
-# - test the imitation learning separately and/or cc the code from predictiveLearning.py
-# - stutze diesen Code so dass er zum inverse learning identisch ist.
-# - und umgekehrt: machen predicticInverse lernen nur von einem determinstischen Signal.
+# - where does the time shift come from? It has no functional explanation. (perhaps hyperpolarisation?)
 # - later ausgabe als summe von frquenzen mit amplitude, fourier zerlegung 
-# - gedaechtnis der Tutor song ist in den Gewichten von HVC to LMAN imprinted, dh wahl von eimen gewichtsstaz# - gedaechnsuts des Mature song ist in den Gewichten von HVC to RA
-# - 30ms (dh dauer des bursts) ontime der RA neurone für phi(t). (10ms von Leonard)
-# - wie lang is die Zeit zwischen 2 bursts.
+# - 10ms (dh dauer des bursts) ontime der RA neurone für phi(t). (10ms von Leonard)
 # - print file von Senn Hanloser und das mit Drosopila
 # - within-burst-spike count gives amplitude of each frequency band.
 # - zerlegung in 4 positive componenten.
-# - LMAN lauft \delta\tau hinterher.
-# - HVC treibt (je 10ms ein burst)
-# - frage leslie ob erst fourier oder erst log?
 # - positive matrix decomposition of Qmot = aud, to ensure all the phis are positive.
-# - cast code into functions
-# - how can I include 
-
 
 # for predictivelearning with mtut as the driver of HVC in the first phase, inverse error goes to 
 
