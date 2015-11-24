@@ -1,0 +1,24 @@
+\section{Iteration}
+
+Let $n = 1\cdotsN$ denote the learning epoch. Each epoch consists of
+Phase B (weight copying), followed by Phase C (causal inverse
+learning). In the following we use superscript indices $n,B,C$ to
+distinguish between quantities from different epochs and phases within
+epochs.
+
+\subsubsection{Phase B -- activity copying}
+
+From \eqref{HVA-RA}, and with $RA_t = w_{LMAN}\LMAN$ it follows:
+\begin{equation}
+\triangle w_{\HVC \to \RA}(t)  = \left(w_\LMAN\LMAN -
+  \oHVC_{t-\Delta} \right) \, \HVC_{t-\Delta} \,, \label{j1}
+\end{equation}
+However we are singing from LMAN with no auditory feeback and LMAN is
+driven from HVC. It therefore reproduces the auditory representation
+of the tutor song:
+\begin{equation}
+  \LMAN = \AUDTUT_\Delta = w_{MEM} \HVC \label{j2}
+\end{equation}
+If we apply one shot learning, then $w_{hvc}$ and remember that $\HVC
+= \one$, then $w_{hvc} = \RA = w_\LMAN \LMAN = w_\LMAN \AUDTUT_{delta}
+

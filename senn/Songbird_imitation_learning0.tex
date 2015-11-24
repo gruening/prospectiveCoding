@@ -1,0 +1,309 @@
+\documentclass[10pt]{article}
+\usepackage{amssymb,amsmath}
+\usepackage{graphicx}
+\usepackage{cite}
+\usepackage[usenames,dvipsnames]{color}
+%\usepackage{/users/senn/Documents/Walter_Physio/Bibfiles/jneurosci}
+\usepackage{jneurosci}
+
+
+
+\usepackage{todonotes}
+\newcommand{\ag}[1]{\todo[inline,color=yellow!40]{#1}}
+\newcommand{\ws}[1]{\todo[inline,color=blue!15]{#1}}
+\newcommand{\rh}[1]{\todo[inline,color=blue!15]{#1}}
+
+
+
+\topmargin 0.0cm
+\oddsidemargin 0.5cm
+\evensidemargin 0.5cm
+\textwidth 16cm 
+\textheight 21cm
+
+% Bold the 'Figure #' in the caption and separate it with a period
+% Captions will be left justified
+\usepackage[labelfont=bf,labelsep=period,justification=raggedright]{caption}
+\DeclareGraphicsExtensions{.eps}
+
+\pagestyle{myheadings}
+\newcommand{\RA}{\mathrm{RA}}
+\newcommand{\AC}{\mathrm{AC}}
+\newcommand{\dtau}{\mathrm{\!\!\!\!\!\! d\tau}}
+\newcommand{\LMAN}{\mathrm{LMAN}}
+\newcommand{\HVC}{\mathrm{HVC}}
+\newcommand{\oLMAN}{\overline{\mathrm{LMAN}}}
+\newcommand{\oHVC}{\overline{\mathrm{HVC}}}
+\newcommand{\cP}{ {\cal{P}} }
+\newcommand{\SPL}{\mathrm{SPL}}
+\newcommand{\mn}{\mathrm{mean\,}}
+\newcommand{\fthr}{\mathrm{tut}}
+\newcommand{\MEMTUT}{\mathrm{AUDTUT}}
+\newcommand{\one}{\mathbb{1}}
+
+\begin{document}
+\begin{flushleft}
+{\LARGE
+  \textbf{\color{red}{Songbird imitation learning}}
+}
+\end{flushleft}
+
+\noindent
+Walter Senn\footnote{Department of Physiology, University of Bern, senn@pyl.unibe.ch, +41 31 631 87 21}, Andr\'e G\"uning\footnote{University of Surrey, a.gruning@ac.uk}, Richard Hahnloser\footnote{Institute of Neuroinformatics, ETHZ/UNIZH, rich@ini.ethz.ch}\\[1ex] \today 
+
+\subsection*{Model of song generation}
+%======================================
+Consider the sound pressure time course $p(t)$ of a (tutor or own)
+song and consider the Fourier decomposition of the time-continuous
+sound pressure level $\SPL(t) = \log \lfloor p(t)/p_\circ \rfloor$,
+with $\lfloor \cdot \rfloor$ representing the Heaviside function (ie
+cut-off at zero).
+\begin{equation}
+\SPL(t) \approx  \sum_i^N  \left( \phi^s_i(t) \sin(\omega_i t) + \phi^c_i(t) \cos(\omega_i t) \right) \,,
+\label{SPL}
+\end{equation}
+for appropriate frequencies $\omega_i$.
+
+LMAN neurons receive conductance-based inputs from HVC and from a lower auditory area representing the Fourier components $\phi_i$. To represent the full auditory signal with non-negative firing rates, we consider $4N$ neurons in LMAN with activity $\LMAN^\nu_i(t)$ specified at each discrete time step $t$, with $i=1\dots N$ and $\nu \in \{ s+,s-, c+,c- \}$ specifying the positive and negative parts of the sine and cosine contribution to the sound pressure level in Eq.\ \ref{SPL}. As time step we choose $dt=10\,$ms, the rough duration of an HVC burst. To fully specify the LMAN activity we first need to describe HVC.
+
+HVC is modeled as a delay line where each neuron fires a $10\,$ms
+burst once during the whole song. If the song duration is $T$ times
+$10\,$ms, we need $T$ neurons to cover the whole song duration with
+HVC activity. These neurons are then active at one single time step
+$t=1\dots T$ during the song, $\HVC^i(t) = \delta_{it}$, for $i=1\dots
+T$. The tutor song is stored in the synaptic strengths $w_{\HVC \to
+  \LMAN}$ from HVC to LMAN. Let us denote the synaptic strength from
+HVC neuron $i$ to LMAN neuron $(\nu,j)$ by $w_{{\HVC^i} \to
+  {\LMAN^\nu_j}}$. \ag{I agree -- my python code models this, however
+  currently without the $s+\dots c-$ split -- how about WS' matlab code?}
+.
+
+We can now define the time course of the LMAN neurons according to
+\begin{eqnarray}
+\LMAN^{s+}_i(t) & = &  \mu \, w_{{\HVC^t} \to {\LMAN^{s+}_i }}  +   (1-\mu) \, \lfloor \overline{\phi^s_i(t\,dt)}  \rfloor \nonumber \\
+\LMAN^{s-}_i(t) & = & \mu \, w_{{\HVC^t} \to {\LMAN^{s-}_i }} + (1-\mu) \, \lfloor -\overline{\phi^s_i(t\,dt)}  \rfloor  \,,
+\label{LMAN}
+\end{eqnarray} where the mean $\overline{\phi^\nu_i(t\,dt)}$ is taken across the interval of duration $dt$ starting at time $t\,dt$ for the discrete times steps $t=0,1,\dots, T$. The activities $\LMAN^{c\pm}_i$ representing the positive and negative contribution of the cosine in (\ref{SPL}) are defined correspondingly. 
+
+\subsubsection{Phase A: Imprinting of Tutor Song}
+
+The synaptic strengths from HVC are set to 
+\begin{equation}
+w_{{\HVC^i} \to {\LMAN^\nu_j}} = \LMAN^\nu_j(t) \,, \; \mbox{ for }  t=i
+\label{wHVCLMAN}
+\end{equation}
+\ag{Ought to be
+$%\begin{equation}
+w_{{\HVC^i} \to {\LMAN^\nu_j}} = \LMAN^\nu_j(t-\Delta) \,, \; \mbox{ for }  t=i
+$%\end{equation}
+because LMAN is always $\Delta$ behind HVC, compare \eqref{i2} and \eqref{i3}.
+}
+where LMAN activity is recorded during the tutor song presentation, $p(t)=p^\mathrm{tutor}(t)$, while the memory input from HVC to LMAN is suppressed ($\mu=0$).
+
+RA neurons are working in two modes. They either exclusively integrate
+input from LMAN while adapting the $\HVC \to \RA$ synapse (`weight
+copying', predictive learning rule, $\lambda=0$), or they exclusively
+integrate input from HVC while adapting the $\HVC \to \RA$ synapse
+\ag{Should be: $\LMAN \to RA$} (`inverse model learning', postdictive learning rule, $\lambda=1$). Formally, the activity of RA neuron $j=1\dots N_\RA$ is
+\begin{equation}
+\RA_j (t)  = \lfloor \lambda \, \overline{\HVC}_j (t) + (1-\lambda) \, \overline{\LMAN}_j (t)  \rfloor \,, 
+\label{RA}
+\end{equation}
+where $\lfloor . \rfloor$ again represents the hard cut off at 0 to mimic the threshold-linear transfer function. Because at time step $t$ only the single HVC neuron $\HVC^i$ with $i=t$ is active, $\HVC^i(t)=1$, the total input from HVC to RA at time $t$ is identical to the synaptic weight,
+\begin{equation}
+\overline{\HVC}_j (t)  = w_{{\HVC^i} \to {\RA_j}} \,, \; \mbox{ for }  i=t \,.
+\label{HVCRA}
+\end{equation}
+The total LMAN input to RA neuron $j$ is given by
+\begin{equation}
+\overline{\LMAN}_j (t)  = \sum_{i,\nu}^{N,4} w_{{\LMAN^\nu_i} \to {\RA_j}} \,  \LMAN^\nu_i (t) \,.
+\label{LMANRA}
+\end{equation}
+
+The song is specified by a linear mixture of the RA activities. Let $M$ be the mixing matrix that converts the $\RA_j$ activities ($j=1 \dots N_\RA$) to $N$ pairs of frequency coefficients $(\psi_i^s, \psi_i^c)$, $i=1\dots N$, with $\psi = M\,\RA$. Note that the $2N$ components of $\psi$ are evaluated at each discrete time step $t=1\dots T$. The entries of $M$ may be sampled from a Gaussian distribution around $0$. The song that is produced by this mixture is defined by the sound pressure level
+\begin{equation}
+\SPL_\psi (t) =  \sum_i^N  \left( \psi^s_i( \lfloor t \rfloor_{dt} ) \sin(\omega_i t ) + \psi^c_i( \lfloor t \rfloor_{dt} ) \cos(\omega_i t ) \right) \,,
+\label{SPLgen}
+\end{equation}
+where $t$ is here again the continuous time variable and $\lfloor t \rfloor_{dt} = \mathrm{floor}(t/dt)$ is the index of the $dt$ time bin containing $t$.  The continuous sound pressure is obtained by $p(t) = p_\circ e^{\SPL_\psi (t)}$. \ag{ok}
+
+As a reminder: for RA activity traces see \citetext{Leonardo2005} and for HVC activity traces see \citetext{Kozhevnikov2007}.
+
+\subsection*{Functional plasticity rules for RA-projecting synapses}
+%======================================
+Based on our scheme for imitation learning in the zebra finch we
+consider a predictive learning for HVC$\to$RA synapses and a
+postdictive learning for LMAN$\to$RA synapses. 
+
+\subsubsection{Phase B -- activity copying}
+
+From a functional point of view, the predictive HVC$\to$RA  plasticity should have the form
+\begin{equation}
+\triangle w_{\HVC \to \RA}(t)  = \left(\RA_t -  \oHVC_{t-\Delta} \right) \, \HVC_{t-\Delta} \,,
+\label{HVC-RA}
+\end{equation}
+where $\Delta$ represents the motor-to-auditory delay, roughly
+$70\,$ms. For notational convenience we suppressed the neuron indices
+and instead write time as index. Moreover, $\HVC_{t-\Delta}$ is the
+activity of the specific presynaptic HVC neuron at time $t-\Delta$,
+and $\oHVC_{t-\Delta}$ is the total RA drive stemming from all HVC
+neurons. This rule is active while the RA neuron is actually driven by
+the LMAN input ($\lambda = 0)$). The idea behind the difference
+learning is that in a later stage, when RA is driven by HVC, the same
+RA activity can be reproduced by HVC, albeit now advanced by $\Delta$.  
+
+\subsubsection{Phase C -- causal inverse learning}
+
+The postdictive LMAN$\to$RA plasticity should have the form 
+\begin{equation}
+\triangle w_{\LMAN \to \RA}(t)  = \left(\RA_{t-\Delta} -  \oLMAN_t \right) \, \LMAN_t \,.
+\label{LMAN-RA}
+\end{equation}
+
+
+\subsubsection{Justification of Rule? Or to deal with intervening spikes?}
+
+\ag{Not clear to me what the purpose of these paragraphs is. What do
+  we want to demonstate here? Justify our rule better? Explore our
+  rule to reproduce the graph from Doupe? Argue that we should not
+  have intervening spikes between 2 activations of RA neurons
+  less than $\Delta$ apart? Or part of argumentation how the
+  elligibility trace for post/predictive learning might be implemented?} 
+
+The RA activity (as the presynaptic activities) is intrinsically
+stochastic \ag{So far no neuron in our implementation is modelled as stochastic}. If at time $t$ the RA neuron is spiking, this may only be by chance. A better learning rule is obtained by averaging out the stochasticity. Assuming that the RA activity at a given point in time is 1 or 0, we replace $\RA_t$ in (\ref{HVC-RA}) by its expectation that then takes the form
+\begin{equation}
+\langle \RA_t \rangle  = \cP \{ \RA_t = 1 \, | \, \RA_{t'<t}  \} \approx  \int_0^{\infty} \dtau \, \AC_\RA(\tau) \RA(t-\tau)  \,
+\label{expRA}
+\end{equation}
+where $\AC_\RA$ represents the auto-correlation function of the RA
+activity. Because after the RA neuron is typically bursting, $\RA_t=0$
+if a burst was ending at time $t-\Delta/2$, 
+\ag{But in our model the burst of a HVC neuron last $dt$, and hence
+  also the burst of an RA neuron driven by that HVC neuron. While HVC
+  neurons only burst once in a while, RA neurons can be activated by
+  different HVC neurons and hence bursting in subsequent time steps of
+  size $dt$ -> should we not expect that AC is about zero then between
+  different bins of size $dt$? -- Or does this argument use any
+  biological results I am not aware of (ie that RA firing is also
+  sparse). I feel we can't say anything on AC in the order of
+  $\Delta/2$ -- nothing prevents you so far to activiate the same RA
+  withing $\Delta/2$?}
+
+and we expect that $\AC_\RA(\Delta/2)<0$. Hence, if the RA neuron is activated by a plasticity protocol at time $t - \Delta/2$, i.e.\ $\RA_{t - \Delta/2} = 1$, any HVC synapse must conclude that at time $t$ the RA neuron will not fire anymore, $\langle \RA_t \rangle \approx 0$. Hence, if the presynaptic HVC neuron is activated at time $t-\Delta$, i.e.\ $\HVC_{t - \Delta} = 1$, and if at that time $ \oHVC_{t-\Delta}>0$, long-term depression will be induced according to the plasticity rule
+\begin{equation}
+\triangle w_{\HVC \to \RA}(t)  = \left( \langle \RA_t \rangle -  \oHVC_{t-\Delta} \right) \, \HVC_{t-\Delta} 
+\label{eHVC-RA}
+\end{equation}
+that is obtained from Eq.\ \ref{HVC-RA} by replacing $\RA_t$ with $\langle \RA_t \rangle$. Similarly, Eq.\ \ref{LMAN-RA} is turned into the postdictive rule  
+\begin{equation}
+\triangle w_{\LMAN \to \RA}(t)  = \left(  \langle \RA_{t-\Delta} \rangle -  \oLMAN_t \right) \, \LMAN_t \,,
+\label{eLMAN-RA}
+\end{equation}
+such that a spike of the RA neuron at time $t-\Delta/2$, relative to the spike of the presynaptic LMAN neuron at $t$, will induce LTD.
+
+\subsection*{Learning cycle}
+%======================================
+Given the time discrete simulation in steps of $10\,$ms, $\HVC$ can be seen as a $T \times T$ identity matrix, and $\RA$ and $w_{\HVC \to \RA}$ as $N_\RA \times T$ matrices. When singing from HVC, the RA activity is
+\begin{equation}
+\RA = w_{\HVC \to \RA} \,\HVC = w_{\HVC \to \RA} \,.
+\label{i1}
+\end{equation}
+Note that the RA activity, and hence these weights, are supposed to be
+non-negative. \ag{I have not (yet) implemented this constraint of
+  nonnegativity for RA activity} 
+
+RA drives the motor area and this generates the SPL$_\psi$ specified by the $2N \times T$ matrix $\psi = M\,\RA$, see Eq.\ \ref{SPLgen}.  HVC also learns to reproduce the delayed tutor song memory in LMAN. Hence, when LMAN is purely driven by HVC, 
+\begin{equation}
+\LMAN = w_{\HVC \to \LMAN} \,\HVC \,
+\label{i2}
+\end{equation}
+where $w_{\HVC \to \LMAN}$ is a $4N \times T$ matrix because LMAN has
+$4N$ neurons. Note $w_{\HVC \to \LMAN}$ is nonnegative by its
+definition \eqref{wHVCLMAN} as the auditory components $\phi$ are
+positive. This activity is equal to the delayed copy of the tutor
+song,  
+\begin{equation}
+w_{\HVC \to \LMAN} \,\HVC =  \LMAN^\fthr_{-\Delta} \,,
+\label{i3}
+\end{equation}
+where $\LMAN^\fthr_{ -\Delta}(t) = \LMAN^\fthr(t - \Delta)$. When singing from HVC, the auditory signal to LMAN is mixed by the recall of the delayed tutor song as defined in Eq.\ \ref{LMAN}, 
+\begin{equation}
+\LMAN = \mu \, \LMAN^\fthr_{-\Delta} + (1-\mu) \, \left( \lfloor M\,\RA_{-\Delta} \rfloor ,  \lfloor - M\,\RA_{-\Delta} \rfloor \right) \,,
+\label{i4}
+\end{equation}
+where $M\,\RA$ includes the sine and cosine. The input from LMAN to RA is 
+\begin{equation}
+\overline\LMAN = w_{\LMAN \to \RA} \,\LMAN  \,,
+\label{i5}
+\end{equation}
+and the weights $w_{\LMAN \to \RA}$ are adapted based on the postdictive learning $\Delta w_{\LMAN \to \RA} = (\RA_{-\Delta} - \overline\LMAN ) \, \LMAN$, see Eq.\ \ref{LMAN-RA} and \ref{eLMAN-RA}, respectively (to simplify the simulations, one may consider the RA activity to be periodically completed to a full cycle). 
+
+Learning of the weights $w_{\HVC \to \RA}$, Eq.\ \ref{HVC-RA}, arises when RA is driven by LMAN. Since HVC represents a delay line, there is a single HVC neuron that is active at a given time and the weights can be set by predictive learning in a single step to
+\begin{equation}
+w_{\HVC \to \RA} = \RA_{+\Delta} \,,
+\label{i6}
+\end{equation}
+where the shifted $N_\RA \times T$ matrix $\RA_{+\Delta}$, with $\RA_{+\Delta}(t) = \RA(t+\Delta)$, is again periodically completed. But since learning is driven by LMAN, we have $\RA=\lfloor \overline\LMAN \rfloor = \lfloor w_{\LMAN \to \RA} \,\LMAN  \rfloor $, and (\ref{i6}) turns into
+\begin{eqnarray}
+w_{\HVC \to \RA} =  \left\lfloor w_{\LMAN \to \RA} \,\LMAN_{-\Delta} \right\rfloor  = \left\lfloor w_{\LMAN \to \RA}  \, \LMAN^\fthr  \right\rfloor  \,.
+\label{i7}
+\end{eqnarray}
+For the last step we used (\ref{i4}) and the fact that during the weight copying, when singing is driven by LMAN, there is no auditory feedback, $\mu=1$. From  (\ref{i7}) we conclude that during HVC singing the RA activity is just as it would have been produced by LMAN,
+\begin{eqnarray}
+\RA = \left\lfloor w_{\LMAN \to \RA}  \, \LMAN^\fthr  \right\rfloor  \,.
+\label{i8}
+\end{eqnarray}
+This RA activity generates the song $M\,\RA$ that feeds back to LMAN with a delay of $\Delta$ via (\ref{i4}),
+\begin{equation}
+\LMAN = \mu \, \LMAN^\fthr_{-\Delta} + (1-\mu) \, \left( \left\lfloor M\,  \left\lfloor w_{\LMAN \to \RA}  \, \LMAN_{-\Delta}^\fthr  \right\rfloor          \right\rfloor ,  \left\lfloor - M\,     \left\lfloor w_{\LMAN \to \RA}  \, \LMAN_{-\Delta}^\fthr  \right\rfloor        \right \rfloor \right) \,.
+\label{i9}
+\end{equation}
+Going again back to the postdictive learning during HVC singing, $\Delta w_{\LMAN \to \RA} = (\RA_{-\Delta} - \overline\LMAN ) \, \LMAN$, and using (\ref{i5}) and (\ref{i8}), we get 
+\begin{eqnarray}
+\Delta w_{\LMAN \to \RA} = \left( \left\lfloor w_{\LMAN \to \RA}  \, \LMAN_{-\Delta}^\fthr  \right\rfloor - w_{\LMAN \to \RA} \,\LMAN \right) \, \LMAN  \,,
+\label{i10}
+\end{eqnarray}
+with LMAN given in (\ref{i9}). To understand the iteration of the two equations (\ref{i9}) and (\ref{i10}), we may neglect the nonlinearities and get 
+\begin{eqnarray}
+\Delta w_{\LMAN \to \RA} & =  & \left( w_{\LMAN \to \RA}  \, \LMAN_{-\Delta}^\fthr  - w_{\LMAN \to \RA} \,\LMAN \right) \, \LMAN  \\
+\LMAN & = & \mu \, \LMAN^\fthr_{-\Delta} + (1-\mu) \, M\,  w_{\LMAN \to \RA}  \, \LMAN_{-\Delta}^\fthr \,.
+\label{i11}
+\end{eqnarray}
+Iterating this yields the fixed point $w_{\LMAN \to \RA} = M^{-1}$, as we expected.
+
+\subsection*{Matching the Doupe's plasticity results}
+%======================================
+According to \citetext{Mehaffey2015} the plasticity windows look as
+reproduced in Fig.\ \ref{figDoupe}. We need to match the above
+plasticity rules (Eqs \ref{eHVC-RA} and \ref{eLMAN-RA}) to these
+curves. Since in the two phases the RA activity is driven by LMAN and
+HVC, respectively, we may replace $\langle \RA_t \rangle$ and $\langle
+\RA_{t-\Delta} \rangle$ by $\LMAN_t$ and $\HVC_{t-\Delta}$,
+respectively. Moreover, due the hyperpolarization of RA soma, we
+assume that the plasticity induction machineries in the HVC and LMAN
+synapses are both delayed by $\gamma=50$ ms. \ag{Is this an adhoc
+  assumption, or supported in the literature?}. The plasticity rules (\ref{eHVC-RA}) and (\ref{eLMAN-RA}) then read as
+\begin{eqnarray}
+\triangle w_{\HVC \to \RA}(t)  & = & \left( \LMAN_t  -  \oHVC_{t-\gamma-\Delta} \right) \, \HVC_{t-\gamma-\Delta}  \\
+\triangle w_{\LMAN \to \RA}(t)  & = & \left(  \HVC_{t-\Delta} -  \oLMAN_{t-\gamma} \right) \, \LMAN_{t-\gamma} \,.   
+\label{dwexp}
+\end{eqnarray}
+This is expected to reproduce the experimental data shown in Fig.\ \ref{figDoupe}.  
+
+\begin{figure}[!ht]  %%%%%%%%%% Figure 1 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\vspace{0mm}
+\begin{center}
+\includegraphics[scale=1.5]{../Figures/Plasticity_Fig_Mehaffey_Doupe_2015.pdf}
+%\includegraphics[scale=0.6]{../Figures/ImitationLearning1-F1.pdf}
+\end{center}
+\vspace{-0.5cm}
+\caption{Doupe's plasticity rules for $\HVC_\RA$ and $\LMAN_\RA$  synapses.}
+\label{figDoupe}
+\end{figure}   %%%%%%%%%% End of Figure 1 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\bibliographystyle{/jneurosci}
+\bibliography{/users/senn/Documents/Walter_Physio/Bibfiles/neuroPlasticity,/users/senn/Documents/Walter_Physio/Bibfiles/library}
+\end{document} 
+
