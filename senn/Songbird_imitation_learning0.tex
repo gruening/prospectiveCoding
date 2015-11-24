@@ -66,7 +66,7 @@ for appropriate frequencies $\omega_i$.
 
 LMAN neurons receive conductance-based inputs from HVC and from a lower auditory area representing the Fourier components $\phi_i$. To represent the full auditory signal with non-negative firing rates, we consider $4N$ neurons in LMAN with activity $\LMAN^\nu_i(t)$ specified at each discrete time step $t$, with $i=1\dots N$ and $\nu \in \{ s+,s-, c+,c- \}$ specifying the positive and negative parts of the sine and cosine contribution to the sound pressure level in Eq.\ \ref{SPL}. As time step we choose $dt=10\,$ms, the rough duration of an HVC burst. To fully specify the LMAN activity we first need to describe HVC.
 
-HVC is modeled as a delay line where each neuron fires a $10\,$ms
+HVC is modelled as a delay line where each neuron fires a $10\,$ms
 burst once during the whole song. If the song duration is $T$ times
 $10\,$ms, we need $T$ neurons to cover the whole song duration with
 HVC activity. These neurons are then active at one single time step
@@ -75,7 +75,7 @@ T$. The tutor song is stored in the synaptic strengths $w_{\HVC \to
   \LMAN}$ from HVC to LMAN. Let us denote the synaptic strength from
 HVC neuron $i$ to LMAN neuron $(\nu,j)$ by $w_{{\HVC^i} \to
   {\LMAN^\nu_j}}$. \ag{I agree -- my python code models this, however
-  currently without the $s+\dots c-$ split -- how about WS' matlab code?}
+  currently without the $s+\dots c-$ split -- how about WS' Matlab code?}
 .
 
 We can now define the time course of the LMAN neurons according to
@@ -125,7 +125,7 @@ The song is specified by a linear mixture of the RA activities. Let $M$ be the m
 \SPL_\psi (t) =  \sum_i^N  \left( \psi^s_i( \lfloor t \rfloor_{dt} ) \sin(\omega_i t ) + \psi^c_i( \lfloor t \rfloor_{dt} ) \cos(\omega_i t ) \right) \,,
 \label{SPLgen}
 \end{equation}
-where $t$ is here again the continuous time variable and $\lfloor t \rfloor_{dt} = \mathrm{floor}(t/dt)$ is the index of the $dt$ time bin containing $t$.  The continuous sound pressure is obtained by $p(t) = p_\circ e^{\SPL_\psi (t)}$. \ag{ok}
+where $t$ is here again the continuous time variable and $\lfloor t \rfloor_{dt} = \mathrm{floor}(t/dt)$ is the index of the $dt$ time bin containing $t$.  The continuous sound pressure is obtained by $p(t) = p_\circ e^{\SPL_\psi (t)}$. 
 
 As a reminder: for RA activity traces see \citetext{Leonardo2005} and for HVC activity traces see \citetext{Kozhevnikov2007}.
 
@@ -164,14 +164,14 @@ The postdictive LMAN$\to$RA plasticity should have the form
 \subsubsection{Justification of Rule? Or to deal with intervening spikes?}
 
 \ag{Not clear to me what the purpose of these paragraphs is. What do
-  we want to demonstate here? Justify our rule better? Explore our
-  rule to reproduce the graph from Doupe? Argue that we should not
+  we want to demonstrate here? Justify our rule better? Explore how our
+  rule reproduces the graph from Doupe? Argue that we should not
   have intervening spikes between 2 activations of RA neurons
   less than $\Delta$ apart? Or part of argumentation how the
-  elligibility trace for post/predictive learning might be implemented?} 
+  eligibility trace for post/predictive learning might be implemented?} 
 
 The RA activity (as the presynaptic activities) is intrinsically
-stochastic \ag{So far no neuron in our implementation is modelled as stochastic}. If at time $t$ the RA neuron is spiking, this may only be by chance. A better learning rule is obtained by averaging out the stochasticity. Assuming that the RA activity at a given point in time is 1 or 0, we replace $\RA_t$ in (\ref{HVC-RA}) by its expectation that then takes the form
+stochastic. If at time $t$ the RA neuron is spiking, this may only be by chance. A better learning rule is obtained by averaging out the stochasticity. Assuming that the RA activity at a given point in time is 1 or 0, we replace $\RA_t$ in (\ref{HVC-RA}) by its expectation that then takes the form
 \begin{equation}
 \langle \RA_t \rangle  = \cP \{ \RA_t = 1 \, | \, \RA_{t'<t}  \} \approx  \int_0^{\infty} \dtau \, \AC_\RA(\tau) \RA(t-\tau)  \,
 \label{expRA}
@@ -179,7 +179,7 @@ stochastic \ag{So far no neuron in our implementation is modelled as stochastic}
 where $\AC_\RA$ represents the auto-correlation function of the RA
 activity. Because after the RA neuron is typically bursting, $\RA_t=0$
 if a burst was ending at time $t-\Delta/2$, 
-\ag{But in our model the burst of a HVC neuron last $dt$, and hence
+\ag{But in our model the burst of a HVC neuron lasts $dt$, and hence
   also the burst of an RA neuron driven by that HVC neuron. While HVC
   neurons only burst once in a while, RA neurons can be activated by
   different HVC neurons and hence bursting in subsequent time steps of
@@ -187,7 +187,7 @@ if a burst was ending at time $t-\Delta/2$,
   different bins of size $dt$? -- Or does this argument use any
   biological results I am not aware of (ie that RA firing is also
   sparse). I feel we can't say anything on AC in the order of
-  $\Delta/2$ -- nothing prevents you so far to activiate the same RA
+  $\Delta/2$ -- nothing prevents you so far to activate the same RA
   withing $\Delta/2$?}
 
 and we expect that $\AC_\RA(\Delta/2)<0$. Hence, if the RA neuron is activated by a plasticity protocol at time $t - \Delta/2$, i.e.\ $\RA_{t - \Delta/2} = 1$, any HVC synapse must conclude that at time $t$ the RA neuron will not fire anymore, $\langle \RA_t \rangle \approx 0$. Hence, if the presynaptic HVC neuron is activated at time $t-\Delta$, i.e.\ $\HVC_{t - \Delta} = 1$, and if at that time $ \oHVC_{t-\Delta}>0$, long-term depression will be induced according to the plasticity rule
@@ -210,7 +210,7 @@ Given the time discrete simulation in steps of $10\,$ms, $\HVC$ can be seen as a
 \label{i1}
 \end{equation}
 Note that the RA activity, and hence these weights, are supposed to be
-non-negative. \ag{I have not (yet) implemented this constraint of
+non-negative. \ag{I have not (yet fully) implemented this constraint of
   nonnegativity for RA activity} 
 
 RA drives the motor area and this generates the SPL$_\psi$ specified by the $2N \times T$ matrix $\psi = M\,\RA$, see Eq.\ \ref{SPLgen}.  HVC also learns to reproduce the delayed tutor song memory in LMAN. Hence, when LMAN is purely driven by HVC, 
