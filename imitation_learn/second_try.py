@@ -22,6 +22,24 @@ from scitools.std import *
 def delayperm(x,n):  # Circles the columns of matrix x to the right by n columns. 
     return np.roll(x, n, axis=1);
 
+
+
+# lowest and highest value for activitiy clipping:
+
+least = 0; # -1000
+threshold = 1 # 0.1;
+sat = 1000
+
+
+
+
+# take the "membrane potential" x and applies a threadhold linear function to it:
+def activation(x): 
+    return maximum(x - threshold, 0);
+#    return x
+#    return x.clip(least, sat)
+
+
 # Learning of the inverse and then the predictive inverse model for song generation. 
 # Based on discussions with Richard and Surya, Jan 14, 2011. Bugs etc
 # attributed to Walter (and now also Andre) 
@@ -42,16 +60,13 @@ def delayperm(x,n):  # Circles the columns of matrix x to the right by n columns
 # - 2015/11/02  HVC branch: implement HVC as a clock.
 # - 2015/11/10  rectify plots and legends
 # - 2015/11/16  ready to demonstrateo
-# - 2015/11/16  implementing Phase A
+# - 2015/11/16  implement Phase A
+# - 2015/12/06  implement threshold
 
-# lowest and highest value for activitiy clipping:
-
-least = -1000
-sat = 1000
 
 
 # dimension of song, ie number of "acoustic" degrees of freedom"
-n_sound = 20; # was 200, or 50
+n_sound = 200; # was 20, or 50
 
 # number of motor neurons (RA)
 n_ra = n_sound /2;
@@ -74,15 +89,15 @@ n_hvc = T;
 tau = 7; 
 
 # learning steps for model 
-n_learn = 1200 # 2000 # 600 
+n_learn = 4000 # 1200 # 2000 # 600 
 
-eta_lman = 0.05 # 0.002; # learning rate for inverse model via lman
+eta_lman = 0.002 # 0.05 # 0.002; # learning rate for inverse model via lman
 # -- that # seems to be sufficient. higfher learning rates in the
 # order of 0.005,
 # lead to oscilations, 0.003 to fluctations , 0.0001 is too small.
 
 # learning rate for weight copying 
-eta_hvc = 1 # one shot learning
+eta_hvc = 0.01 # one shot learning
 
 # Parameter to regularize the matrices 
 epsi = 1/10; 
@@ -103,7 +118,8 @@ A = np.random.randn(n_aud, n_sound) / sqrt(n_sound);
 # Total motor to auditory transformation. 
 M=A.dot(S); 
 
-song_ra_tut = np.random.randn(n_ra,T).clip(least,sat); 
+#song_ra_tut = np.random.randn(n_ra,T).clip(least,sat); 
+song_ra_tut = activation(np.random.randn(n_ra,T));
 
 # acoustic representation of tutor song -- this what we start from.
 # song_sound_tut = np.random.randn(n_sound,T); 
@@ -178,17 +194,20 @@ def phaseC0():
     # - HVC not learning.
 
     # Random drive on  RA during imitation learning
-    ra_soma = w_hvc.dot(hvc_soma).clip(least,sat); # + 1/100 * np.random.randn(n_ra, T); 
+#    ra_soma = w_hvc.dot(hvc_soma).clip(least,sat); # + 1/100 * np.random.randn(n_ra, T); 
+    ra_soma = activation(w_hvc.dot(hvc_soma)); # + 1/100 * np.random.randn(n_ra, T); 
     #    ra_soma = np.random.randn(n_ra,T);
     
     # auditory activity produced by the random activity:
-    aud_soma = delayperm(M.dot(ra_soma),tau).clip(least,sat); 
+#    aud_soma = delayperm(M.dot(ra_soma),tau).clip(least,sat); 
 
+    aud_soma = activation(delayperm(M.dot(ra_soma),tau)) 
     lman_soma = aud_soma
 
     # motor activity predicted from the auditory activity (ie
     # potential on RA dendrite from LMAN:
-    ra_pred = w_lman.dot(lman_soma).clip(least,sat); 
+#    ra_pred = (w_lman.dot(lman_soma)).clip(least,sat); 
+    ra_pred = activation(w_lman.dot(lman_soma))
 
     # sound predicted from LMAN activity:
     sound_pred = S.dot(ra_pred); 
@@ -226,19 +245,21 @@ def phaseC(): # causal inverse learning
     # HVC drives RA during imitation learning
     lamb = 1.0 # setting this to values different from zero makes it
     # worse (due to the time lag between HVC and LMAN?) -- test again
-    ra_soma = lamb * w_hvc.dot(hvc_soma).clip(least,sat) # + (1-lamb)*w_lman.doc(lman_soma);
+#    ra_soma = lamb * w_hvc.dot(hvc_soma).clip(least,sat) # + (1-lamb)*w_lman.doc(lman_soma);
+    ra_soma = activation(lamb * w_hvc.dot(hvc_soma)) 
 
     # auditory activity produced by the sub song 
-    aud_soma = delayperm(M.dot(ra_soma),tau) #.clip(least,sat); 
+    aud_soma = activation(delayperm(M.dot(ra_soma),tau)) #.clip(least,sat); 
 
     # lman soma is a convex mix of auditory input and imprinted tutor memory:
     # mu = fraction of memory in the mixture.
-    mu = 0.5  # 0.5 # 0.99 --
-    lman_soma = ((1-mu) * aud_soma  + mu * w_mem.dot(hvc_soma)).clip(least,sat);
+    #    mu = 0.95  # 0.5 # 0.99 --
+    mu = 0.8
+    lman_soma = activation((1-mu) * aud_soma  + mu * w_mem.dot(hvc_soma))
 
     # motor activity predicted from the auditory activity (ie
     # potential on RA dendrite from LMAN:
-    ra_pred = w_lman.dot(lman_soma).clip(least,sat); 
+    ra_pred = activation(w_lman.dot(lman_soma)) #.clip(least,sat); 
 
     # sound predicted from LMAN activity:
     sound_pred = S.dot(ra_pred);  # \todo: take this away
@@ -278,17 +299,17 @@ def phaseB():
     # - HVC dendrite shunting inihbition
     
     # (delayed) song from memory:
-    lman_soma = w_mem.dot(hvc_soma).clip(least,sat);
+    lman_soma = activation(w_mem.dot(hvc_soma)) 
 
     # mapping from LMAN to RA (
-    ra_soma = w_lman.dot(lman_soma).clip(least,sat) # +
+    ra_soma = activation(w_lman.dot(lman_soma)) 
     # 1/10000*np.random.randn(n_ra, n_hvc); makes no difference
 
     # Presynaptic activity at HVC dendrite
     pre_hvc = hvc_soma;
 
     # Potential in HVC dendrite:
-    ra_dend_hvc =  w_hvc.dot(pre_hvc).clip(least,sat);  
+    ra_dend_hvc =  activation(w_hvc.dot(pre_hvc)) 
 
     # potential difference between soma and hvc dendrite (predictive learning):
 #    diff_hvc = ra_soma - delayperm(ra_dend_hvc, 0)
@@ -308,11 +329,16 @@ def phaseB():
     # dendrite from HVC -- a measure that copy learning works:
     e_potential[i] = sum(diff_hvc*diff_hvc) / (T*n_ra);
 
+
+ra_soma = np.zeros(n_ra);
+
 def sing_HVC():
+
+    global ra_soma;
 
     # MSE between HVC produced sound and tutor song:
 
-    ra_soma = w_hvc.dot(hvc_soma).clip(least,sat);
+    ra_soma = activation(w_hvc.dot(hvc_soma)) 
     song_sound_hvc = S.dot(ra_soma)
     diff_sound_hvc =  song_sound_hvc - song_sound_tut;
     e_hvc_sound[i] = sum(diff_sound_hvc*diff_sound_hvc)/ (T*n_sound);
@@ -375,4 +401,20 @@ legend("HVC Song");
 
 hold("off");
 
-hardcopy("gesang.png")
+hardcopy("song.png")
+
+
+i=floor(np.random.rand()*n_ra);
+
+
+figure(3);
+clf;
+title("Sample RA Dimension");
+xlabel('Time'); 
+ylabel('Activity');
+
+
+plot(ra_soma[i])
+legend("RA activity");
+
+hardcopy("RA_activity.png")
