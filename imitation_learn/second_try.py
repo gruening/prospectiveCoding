@@ -4,7 +4,6 @@
 # -  experiment that songbirds geht confused when the song is
 #    played back with a delay? 
 # \todo: normalsirung von allen vektoren und matrizen durch gehen
-# \todo : implement the cos/sin split
 
 import numpy as np
 from scitools.std import *
@@ -15,12 +14,13 @@ def delayperm(x,n):  # Circles the columns of matrix x to the right by n columns
 # lowest and highest value for activitiy clipping:
 
 least = 0; # -1000
-threshold = 0 # 0.1;
+threshold = 0.0;
+ra_thresh = 0.0
 sat = 1000
 
 # take the "membrane potential" x and applies a threadhold linear function to it:
-def activation(x): 
-    return maximum(x - threshold, 0);
+def activation(x, thresh = threshold): 
+    return maximum(x - thresh, 0);
 #    return x
 #    return x.clip(least, sat)
 
@@ -46,15 +46,19 @@ def activation(x):
 # - 2015/11/10  rectify plots and legends
 # - 2015/11/16  ready to demonstrateo
 # - 2015/11/16  implement Phase A
-# - 2015/12/06  implement threshold
-
+# - 2015/12/07  implement threshold
+# - 2015/12/08  implement large and sparse RA
 
 
 # dimension of song, ie number of "acoustic" degrees of freedom
 n_sound = 50 # 200; # was 20, or 50
 
 # number of motor neurons (RA)
-n_ra = n_sound / 5;
+n_ra = n_sound * 5;
+
+
+# degrees of freedome of the vocal tract:
+n_mot = n_sound / 5;
 
 # number of auditory neurons which receive the sound and convert into neural activity.
 n_aud = n_sound;
@@ -74,7 +78,7 @@ n_hvc = T;
 tau = 7; 
 
 # learning steps for model 
-n_learn = 4000 # 1200 # 2000 # 600 
+n_learn = 8000 # 4000 # 1200 # 2000 # 600 
 
 eta_lman = 0.002 # 0.05 # learning rate for inverse model via lman
 # -- that # seems to be sufficient. higfher learning rates in the
@@ -87,26 +91,33 @@ eta_hvc = 0.01 # one shot learning does not explore the inverse map sufficiently
 # Parameter to regularize the matrices 
 epsi = 1/10; 
 
-# syrinx; converts the RA motor activity signal m into a sound (here just matrix)
-S = (np.random.randn(n_sound,n_ra)) / sqrt(n_ra); #+ epsi*np.eye(n_sound,n_ra)) 
+
+# weights between RA and the vocal tract degrees of freedom (the vocal tract is the bottle neck re degrees of freedom)
+
+#w_mot = np.eye(n_mot, n_ra);
+w_mot = np.random.randn(n_mot, n_ra) / sqrt(n_ra);
+
+# syrinx; converts the motor activity signal m into a sound (here just matrix)
+S = (np.random.randn(n_sound,n_mot)) / sqrt(n_mot); #+ epsi*np.eye(n_sound,n_mot)) 
 
 # auditory pathway; converts the song into an auditory signal for aud
 # neurons (here just a matrix)
 A = np.random.randn(n_aud, n_sound) / sqrt(n_sound); 
 #A = (np.random.randn(n_aud, n_sound).clip(0,10) + epsi*np.ones((n_aud, n_sound))) / sqrt(n_sound); 
 
-# Total motor to auditory transformation. 
-M=A.dot(S); 
+# Total RA to auditory transformation. 
+M=A.dot(S).dot(w_mot); 
 
-# ra activation of the tutor (necessary to generate a singable song
-song_ra_tut = activation(np.random.randn(n_ra,T));
+# mot activation of the tutor (necessary to generate a singable song
+song_mot_tut = activation(np.random.randn(n_mot,T));
 
 # acoustic representation of tutor song -- this is what we start from.
 # song_sound_tut = np.random.randn(n_sound,T); 
-song_sound_tut = S.dot(song_ra_tut);
+song_sound_tut = S.dot(song_mot_tut);
 
 # weights between HVC and LMAN that hold the imprinted tutor song:
 w_mem = np.zeros((n_lman, n_hvc));
+
 
 # imprint tutor memory, song is the (n_sound,T) acoustic representation of the tutor song:
 # assume that HVC has a one-hot encoding for each time step:
@@ -132,7 +143,8 @@ phaseA(song_sound_tut);
 # initial weight matrix converting the auditory representation from
 # LMAN into RA motor activity (inverse model) 
 # R = np.linalg.inv(M)
-w_lman =np.random.randn(n_ra,n_lman) / sqrt(n_lman); 
+# w_lman =np.random.randn(n_ra,n_lman) / sqrt(n_lman); 
+w_lman =np.random.randn(n_ra,n_lman) #/ sqrt(n_lman); higher weights to work with sparse representations?
 
 # w_lman = R  # injection of inverse matrix
 
@@ -163,7 +175,7 @@ def phaseC0():
     # - HVC not learning.
 
     # Random drive on  RA during imitation learning
-    ra_soma = activation(w_hvc.dot(hvc_soma));
+    ra_soma = activation(w_hvc.dot(hvc_soma), ra_thresh);
 
     
     # auditory activity produced by the random activity:
@@ -209,7 +221,7 @@ def phaseC(): # causal inverse learning
     lamb = 1.0 # setting this to values different from zero makes it
     # worse (due to the time lag between HVC and LMAN?) -- test again
 #    ra_soma = lamb * w_hvc.dot(hvc_soma).clip(least,sat) # + (1-lamb)*w_lman.doc(lman_soma);
-    ra_soma = activation(lamb * w_hvc.dot(hvc_soma)) 
+    ra_soma = activation(lamb * w_hvc.dot(hvc_soma), ra_thresh) 
 
     # auditory activity produced by the sub song 
     aud_soma = activation(delayperm(M.dot(ra_soma),tau)) #.clip(least,sat); 
@@ -225,14 +237,14 @@ def phaseC(): # causal inverse learning
     ra_pred = activation(w_lman.dot(lman_soma)) #.clip(least,sat); 
 
     # sound predicted from LMAN activity:
-    sound_pred = S.dot(ra_pred);  # \todo: take this away
+    sound_pred = S.dot(w_mot).dot(ra_pred);  # \todo: take this away
 
     # Difference between actual RA activity and predicted (via lman)
     # for learning rule:
     diff_ra_lman=(delayperm(ra_soma, tau) - ra_pred); 
 
     # Difference between LMAN-predicted song activty and actual HVC song:
-    diff_sound_lman = (delayperm(S.dot(ra_soma),tau) - sound_pred); # \todo: simplify this -- all is linear
+    diff_sound_lman = (delayperm(S.dot(w_mot).dot(ra_soma),tau) - sound_pred); # \todo: simplify this -- all is linear
 
     # weight change: dw = (m_t-Delta - ra_pred_t) * a (postdictive
     # learning, need trace of prior motor activity) for weights from
@@ -265,7 +277,7 @@ def phaseB():
     lman_soma = activation(w_mem.dot(hvc_soma)) 
 
     # mapping from LMAN to RA (
-    ra_soma = activation(w_lman.dot(lman_soma)) 
+    ra_soma = activation(w_lman.dot(lman_soma), ra_thresh) 
     # 1/10000*np.random.randn(n_ra, n_hvc); makes no difference
 
     # Presynaptic activity at HVC dendrite
@@ -301,8 +313,8 @@ def sing_HVC():
 
     # MSE between HVC produced sound and tutor song:
 
-    ra_soma = activation(w_hvc.dot(hvc_soma)) 
-    song_sound_hvc = S.dot(ra_soma)
+    ra_soma = activation(w_hvc.dot(hvc_soma), ra_thresh) 
+    song_sound_hvc = S.dot(w_mot).dot(ra_soma)
     diff_sound_hvc =  song_sound_hvc - song_sound_tut;
     e_hvc_sound[i] = sum(diff_sound_hvc*diff_sound_hvc)/ (T*n_sound);
 
