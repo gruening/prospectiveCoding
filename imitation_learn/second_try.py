@@ -7,6 +7,35 @@
 
 import numpy as np
 from scitools.std import *
+import scipy.fftpack as fftp #.fftpack as fft # this is not the numpy implementation! Sth better available?
+import ewave as wav
+
+
+rate = 10000
+
+# from audio import *
+def load_wave(fname): 
+    tutor_wav = wav.wavfile(fname);
+    aud_raw = np.array(tutor_wav.read());
+    aud_sample = np.reshape(aud_raw, (100, -1)) # samples into 100 time bins.
+    aud_dct = fftp.dct(aud_sample.real.astype(float)).T # matrix right way round?
+
+    # Normalise:
+    aud_dct -= aud_dct.mean(); 
+    aud_dct /= aud_dct.std();
+
+    return aud_dct;
+
+def save_wave(fname, song):
+    output = fftp.idct(song.T);
+    output /= output.std();
+    out_wav = wav.wavfile(fname, mode="w", sampling_rate = rate);
+    out_wav.write(output); # do I need to reshape, or is the automatic flattening the right thing?
+    out_wav.flush()
+
+    return output
+
+
 
 def delayperm(x,n):  # Circles the columns of matrix x to the right by n columns. 
     return np.roll(x, n, axis=1);
@@ -20,8 +49,8 @@ sat = 1000
 
 # take the "membrane potential" x and applies a threadhold linear function to it:
 def activation(x, thresh = threshold): 
-    return maximum(x - thresh, 0);
-#    return x
+#    return maximum(x - thresh, 0);
+    return x
 #    return x.clip(least, sat)
 
 
@@ -51,14 +80,14 @@ def activation(x, thresh = threshold):
 
 
 # dimension of song, ie number of "acoustic" degrees of freedom
-n_sound = 50 # 200; # was 20, or 50
+n_sound = 100 # 50 # 100 # 50 # 200; # was 20, or 50
 
 # number of motor neurons (RA)
-n_ra = n_sound * 5;
+n_ra = n_sound  #* 5;
 
 
 # degrees of freedome of the vocal tract:
-n_mot = n_sound / 5;
+n_mot = n_sound # / 5;
 
 # number of auditory neurons which receive the sound and convert into neural activity.
 n_aud = n_sound;
@@ -67,7 +96,7 @@ n_aud = n_sound;
 n_lman = n_aud;
 
 # duration of subsongs and of tutor song  [steps of 10ms] -- so we are
-# modelling 10sec here -- realistic length of song?
+# modelling 1 sec here -- realistic length of song?
 T = 100; 
 
 # Number of HVC clock neurons -- one time step is 10ms
@@ -78,7 +107,7 @@ n_hvc = T;
 tau = 7; 
 
 # learning steps for model 
-n_learn = 8000 # 4000 # 1200 # 2000 # 600 
+n_learn = 500 #8000 # 4000 # 1200 # 2000 # 600 
 
 eta_lman = 0.002 # 0.05 # learning rate for inverse model via lman
 # -- that # seems to be sufficient. higfher learning rates in the
@@ -89,13 +118,13 @@ eta_lman = 0.002 # 0.05 # learning rate for inverse model via lman
 eta_hvc = 0.01 # one shot learning does not explore the inverse map sufficiently.
 
 # Parameter to regularize the matrices 
-epsi = 1/10; 
+# epsi = 1/10; 
 
 
 # weights between RA and the vocal tract degrees of freedom (the vocal tract is the bottle neck re degrees of freedom)
 
-#w_mot = np.eye(n_mot, n_ra);
-w_mot = np.random.randn(n_mot, n_ra) / sqrt(n_ra);
+w_mot = np.eye(n_mot, n_ra) #/ sqrt(sqrt(n_ra));
+#w_mot = np.random.randn(n_mot, n_ra) / sqrt(n_ra);
 
 # syrinx; converts the motor activity signal m into a sound (here just matrix)
 S = (np.random.randn(n_sound,n_mot)) / sqrt(n_mot); #+ epsi*np.eye(n_sound,n_mot)) 
@@ -103,13 +132,16 @@ S = (np.random.randn(n_sound,n_mot)) / sqrt(n_mot); #+ epsi*np.eye(n_sound,n_mot
 # auditory pathway; converts the song into an auditory signal for aud
 # neurons (here just a matrix)
 A = np.random.randn(n_aud, n_sound) / sqrt(n_sound); 
-#A = (np.random.randn(n_aud, n_sound).clip(0,10) + epsi*np.ones((n_aud, n_sound))) / sqrt(n_sound); 
+# + epsi*np.ones((n_aud, n_sound))) / sqrt(n_sound); 
 
 # Total RA to auditory transformation. 
 M=A.dot(S).dot(w_mot); 
 
 # mot activation of the tutor (necessary to generate a singable song
-song_mot_tut = activation(np.random.randn(n_mot,T));
+# song_mot_tut = activation(np.random.randn(n_mot,T));
+
+song_mot_tut = load_wave("test.wav");
+#song_mot_tut = np.random.randn(n_mot,T);
 
 # acoustic representation of tutor song -- this is what we start from.
 # song_sound_tut = np.random.randn(n_sound,T); 
@@ -117,7 +149,6 @@ song_sound_tut = S.dot(song_mot_tut);
 
 # weights between HVC and LMAN that hold the imprinted tutor song:
 w_mem = np.zeros((n_lman, n_hvc));
-
 
 # imprint tutor memory, song is the (n_sound,T) acoustic representation of the tutor song:
 # assume that HVC has a one-hot encoding for each time step:
@@ -144,7 +175,7 @@ phaseA(song_sound_tut);
 # LMAN into RA motor activity (inverse model) 
 # R = np.linalg.inv(M)
 # w_lman =np.random.randn(n_ra,n_lman) / sqrt(n_lman); 
-w_lman =np.random.randn(n_ra,n_lman) #/ sqrt(n_lman); higher weights to work with sparse representations?
+w_lman =np.random.randn(n_ra,n_lman) / sqrt(n_lman); # higher weights to work with sparse representations?
 
 # w_lman = R  # injection of inverse matrix
 
@@ -220,7 +251,7 @@ def phaseC(): # causal inverse learning
     # HVC drives RA during imitation learning
     lamb = 1.0 # setting this to values different from zero makes it
     # worse (due to the time lag between HVC and LMAN?) -- test again
-#    ra_soma = lamb * w_hvc.dot(hvc_soma).clip(least,sat) # + (1-lamb)*w_lman.doc(lman_soma);
+    #    ra_soma = lamb * w_hvc.dot(hvc_soma).clip(least,sat) # + (1-lamb)*w_lman.doc(lman_soma);
     ra_soma = activation(lamb * w_hvc.dot(hvc_soma), ra_thresh) 
 
     # auditory activity produced by the sub song 
@@ -371,7 +402,13 @@ legend("Tutor Song");
 
 hold("on");
 
-plot(sing_HVC()[i]);
+song = sing_HVC()
+
+final_song = save_wave("song.wav", song);
+
+
+
+plot(song[i]);
 legend("HVC Song");
 
 hold("off");
