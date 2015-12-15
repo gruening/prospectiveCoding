@@ -9,34 +9,11 @@ import numpy as np
 from scitools.std import *
 import scipy.fftpack as fftp #.fftpack as fft # this is not the numpy implementation! Sth better available?
 import ewave as wav
-
+import ou
 
 rate = 10000
 
 # from audio import *
-def load_wave(fname): 
-    tutor_wav = wav.wavfile(fname);
-    aud_raw = np.array(tutor_wav.read());
-    aud_sample = np.reshape(aud_raw, (100, -1)) # samples into 100 time bins.
-    aud_dct = fftp.dct(aud_sample.real.astype(float)).T # matrix right way round?
-
-    # Normalise:
-    aud_dct -= aud_dct.mean(); 
-    aud_dct /= aud_dct.std();
-
-    return aud_dct;
-
-def save_wave(fname, song):
-    output = fftp.idct(song.T);
-    output /= output.std();
-    out_wav = wav.wavfile(fname, mode="w", sampling_rate = rate);
-    out_wav.write(output); # do I need to reshape, or is the automatic flattening the right thing?
-    out_wav.flush()
-
-    return output
-
-
-
 def delayperm(x,n):  # Circles the columns of matrix x to the right by n columns. 
     return np.roll(x, n, axis=1);
 
@@ -60,7 +37,7 @@ def activation(x, thresh = threshold):
 # 
 # Shared with Andre Gruning, 2015/10/19. Changes:
 # - Oct 2015: updating comments
-# - Oct 2015:  translate to python.
+# - Oct 2015:  translate to python
 # - 2015/11/02: replace random drive with fixed drive.
 # - 2015/11/02: rename variable to better fit our current terminology
 # - 2015/11/02: change from random drive of RA during inversion
@@ -142,6 +119,8 @@ M=A.dot(S).dot(w_mot);
 
 song_mot_tut = load_wave("test.wav");
 #song_mot_tut = np.random.randn(n_mot,T);
+#song_mot_tut = np.reshape(ou.ou(n_mot*T), (n_mot,T));
+
 
 # acoustic representation of tutor song -- this is what we start from.
 # song_sound_tut = np.random.randn(n_sound,T); 

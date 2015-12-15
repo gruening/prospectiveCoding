@@ -2,7 +2,7 @@
 
 import ewave as wav
 import numpy as np
-import scipy #.fftpack as fft # this is not the numpy implementation! Sth better available?
+import scipy.fftpack as fftp # this is not the numpy implementation! Sth better available?
 from scitools.std import *
 
 
@@ -20,16 +20,13 @@ def create_wav() :
 
     sample.write(x)
     sample.flush()
-    # sample.fp.close()
-
-create_wav();
 
 
 def load_wave(fnmae): 
     tutor_wav = wav.wavfile("test.wav");
     aud_raw = np.array(tutor_wav.read());
     aud_sample = np.reshape(aud_raw, (100, -1)) # sample into 100 time bins.
-    aud_dct = scipy.fftpack.dct(aud_sample.real.astype(float)) # matrix right way round?
+    aud_dct = fftp.dct(aud_sample.real.astype(float)) # matrix right way round?
 
     # Normalise:
     aud_dct -= aud_dct.mean(); 
@@ -37,11 +34,33 @@ def load_wave(fnmae):
 
     return aud_dct;
 
-sound = load_wave("test.wav")
+
+def load_wave(fname): 
+    tutor_wav = wav.wavfile(fname);
+    aud_raw = np.array(tutor_wav.read());
+    aud_sample = np.reshape(aud_raw, (100, -1)) # samples into 100 time bins.
+    aud_dct = fftp.dct(aud_sample.real.astype(float)).T # matrix right way round?
+
+    # Normalise:
+    aud_dct -= aud_dct.mean(); 
+    aud_dct /= aud_dct.std();
+
+    return aud_dct;
+
+def save_wave(fname, song):
+    output = fftp.idct(song.T);
+#    output -= output.mean();
+#    output /= output.std();
+    out_wav = wav.wavfile(fname, mode="w", sampling_rate = rate);
+    out_wav.write(output); # do I need to reshape, or is the automatic flattening the right thing?
+    out_wav.flush()
+
+    return output
 
 
-output = scipy.fftpack.idct(sound);
-output /= output.std();
-out_wav = wav.wavfile("output.wav", mode="w", sampling_rate = rate);
-out_wav.write(output); # do I need to reshape, or is the automatic flattening the right thing?
-out_wav.flush()
+# create_wav();
+
+sound = load_wave("input.wav")
+save_wave("output.wav", sound)
+
+
