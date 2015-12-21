@@ -2,7 +2,7 @@
 
 import ewave as wav
 import numpy as np
-import scipy.fftpack as fftp # this is not the numpy implementation! Sth better available?
+import scipy.fftpack as fftp 
 from scitools.std import *
 
 
@@ -22,8 +22,8 @@ def create_wav() :
     sample.flush()
 
 
-def load_wave(fnmae): 
-    tutor_wav = wav.wavfile("test.wav");
+def load_wave(fname): 
+    tutor_wav = wav.wavfile(fname);
     aud_raw = np.array(tutor_wav.read());
     aud_sample = np.reshape(aud_raw, (100, -1)) # sample into 100 time bins.
     aud_dct = fftp.dct(aud_sample.real.astype(float)) # matrix right way round?
@@ -58,9 +58,9 @@ def save_wave(fname, song):
     return output
 
 
-# create_wav();
+create_wav();
 
-sound = load_wave("input.wav")
+sound = load_wave("startreck.wav")
 save_wave("output.wav", sound)
 
 

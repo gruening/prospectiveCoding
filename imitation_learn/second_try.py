@@ -1,15 +1,18 @@
 #!/usr/bin/python
 
-# \todo: - try with a regularisation
-# -  experiment that songbirds geht confused when the song is
+# \todo experiment that songbirds get confused when the song is
 #    played back with a delay? 
 # \todo: normalsirung von allen vektoren und matrizen durch gehen
+# \todo: PCA (or Seungs nonnegative decomposition) of sound samples to get the image from RA to the sound via a low dim bottle neck
+
+
 
 import numpy as np
 from scitools.std import *
 import scipy.fftpack as fftp #.fftpack as fft # this is not the numpy implementation! Sth better available?
 import ewave as wav
 import ou
+import audio
 
 rate = 10000
 
@@ -26,8 +29,8 @@ sat = 1000
 
 # take the "membrane potential" x and applies a threadhold linear function to it:
 def activation(x, thresh = threshold): 
-#    return maximum(x - thresh, 0);
-    return x
+    return maximum(x - thresh, 0);
+#    return x
 #    return x.clip(least, sat)
 
 
@@ -57,14 +60,13 @@ def activation(x, thresh = threshold):
 
 
 # dimension of song, ie number of "acoustic" degrees of freedom
-n_sound = 100 # 50 # 100 # 50 # 200; # was 20, or 50
+n_sound = 50 # 100 # 50 # 100 # 50 # 200; # was 20, or 50
 
 # number of motor neurons (RA)
-n_ra = n_sound  #* 5;
-
+n_ra = n_sound  * 5;
 
 # degrees of freedome of the vocal tract:
-n_mot = n_sound # / 5;
+n_mot = n_sound  / 5;
 
 # number of auditory neurons which receive the sound and convert into neural activity.
 n_aud = n_sound;
@@ -84,7 +86,7 @@ n_hvc = T;
 tau = 7; 
 
 # learning steps for model 
-n_learn = 500 #8000 # 4000 # 1200 # 2000 # 600 
+n_learn = 8000 #8000 # 4000 # 1200 # 2000 # 600 
 
 eta_lman = 0.002 # 0.05 # learning rate for inverse model via lman
 # -- that # seems to be sufficient. higfher learning rates in the
@@ -100,8 +102,8 @@ eta_hvc = 0.01 # one shot learning does not explore the inverse map sufficiently
 
 # weights between RA and the vocal tract degrees of freedom (the vocal tract is the bottle neck re degrees of freedom)
 
-w_mot = np.eye(n_mot, n_ra) #/ sqrt(sqrt(n_ra));
-#w_mot = np.random.randn(n_mot, n_ra) / sqrt(n_ra);
+#w_mot = np.eye(n_mot, n_ra) #/ sqrt(sqrt(n_ra));
+w_mot = np.random.randn(n_mot, n_ra) / sqrt(n_ra);
 
 # syrinx; converts the motor activity signal m into a sound (here just matrix)
 S = (np.random.randn(n_sound,n_mot)) / sqrt(n_mot); #+ epsi*np.eye(n_sound,n_mot)) 
@@ -117,9 +119,9 @@ M=A.dot(S).dot(w_mot);
 # mot activation of the tutor (necessary to generate a singable song
 # song_mot_tut = activation(np.random.randn(n_mot,T));
 
-song_mot_tut = load_wave("test.wav");
+#song_mot_tut = audio.load_wave("startreck.wav");
 #song_mot_tut = np.random.randn(n_mot,T);
-#song_mot_tut = np.reshape(ou.ou(n_mot*T), (n_mot,T));
+song_mot_tut = np.reshape(ou.ou(n_mot*T), (n_mot,T));
 
 
 # acoustic representation of tutor song -- this is what we start from.
@@ -383,7 +385,7 @@ hold("on");
 
 song = sing_HVC()
 
-final_song = save_wave("song.wav", song);
+final_song = audio.save_wave("song.wav", song);
 
 
 
