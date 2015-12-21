@@ -24,7 +24,7 @@ def delayperm(x,n):  # Circles the columns of matrix x to the right by n columns
 
 least = 0; # -1000
 threshold = 0.0;
-ra_thresh = 0.0
+ra_thresh = 0.5
 sat = 1000
 
 # take the "membrane potential" x and applies a threadhold linear function to it:
