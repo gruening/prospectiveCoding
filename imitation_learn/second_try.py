@@ -132,10 +132,9 @@ M=A.dot(S).dot(w_mot);
 # mot activation of the tutor (necessary to generate a singable song
 # song_mot_tut = activation(np.random.randn(n_mot,T));
 
-#song_mot_tut = audio.load_wave("startreck.wav");
+song_mot_tut = audio.load_wave("startreck.wav");
 #song_mot_tut = np.random.randn(n_mot,T);
 song_mot_tut = np.reshape(ou.ou(n_mot*T), (n_mot,T));
-
 
 # acoustic representation of tutor song -- this is what we start from.
 # song_sound_tut = np.random.randn(n_sound,T); 
