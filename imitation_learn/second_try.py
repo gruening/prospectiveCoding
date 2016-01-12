@@ -4,6 +4,19 @@
 #    played back with a delay? 
 # \todo: normalsirung von allen vektoren und matrizen durch gehen
 # \todo: PCA (or Seungs nonnegative decomposition) of sound samples to get the image from RA to the sound via a low dim bottle neck
+# \todo wavelet encodeing: RA burst is on-set of wavelet.16 wavelets scheinen zu reichen
+# \todo print nature 2006 and nat neursci Lewicksi "Efficient auditory coding"
+# \todo teile neuron wavelet 6 832Hz) auf in 6.1 and 6.2 etc to ensure sparse coding
+# \todo look up positive matrix decomposition (for sparse coding in RA)
+# \todo STSRT HERE IN THE NEW YEAR
+#   - try to work out what is going wrong with audio.py as it only can transform sinus wave 
+#       - it seems to lower the frequencies
+#       - check the transposes and dimension of the matrices -- are they alligned?
+#       - check also the norm of all.
+#   - try both wavelets and stft
+#   - try to work with formants
+# \todo "physical model" of song/speech syntheseby wave-let pca to
+#    generate a physical model and subspace of speech 
 
 
 
@@ -24,7 +37,7 @@ def delayperm(x,n):  # Circles the columns of matrix x to the right by n columns
 
 least = 0; # -1000
 threshold = 0.0;
-ra_thresh = 0.5
+ra_thresh = 0.0;
 sat = 1000
 
 # take the "membrane potential" x and applies a threadhold linear function to it:
