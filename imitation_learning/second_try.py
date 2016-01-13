@@ -42,8 +42,8 @@ sat = 1000
 
 # take the "membrane potential" x and applies a threadhold linear function to it:
 def activation(x, thresh = threshold): 
-    return maximum(x - thresh, 0);
-#    return x
+#    return maximum(x - thresh, 0);
+    return x
 #    return x.clip(least, sat)
 
 
@@ -99,7 +99,7 @@ n_hvc = T;
 tau = 7; 
 
 # learning steps for model 
-n_learn = 50 # 8000 # 4000 # 1200 # 2000 # 600 
+n_learn = 1000 # 8000 # 4000 # 1200 # 2000 # 600 
 
 eta_lman = 0.002 # 0.05 # learning rate for inverse model via lman
 # -- that # seems to be sufficient. higfher learning rates in the
@@ -115,11 +115,13 @@ eta_hvc = 0.01 # one shot learning does not explore the inverse map sufficiently
 
 # weights between RA and the vocal tract degrees of freedom (the vocal tract is the bottle neck re degrees of freedom)
 
-#w_mot = np.eye(n_mot, n_ra) #/ sqrt(sqrt(n_ra));
-w_mot = np.random.randn(n_mot, n_ra) / sqrt(n_ra);
+w_mot = np.eye(n_mot, n_ra) #/ sqrt(sqrt(n_ra));
+#w_mot = np.random.randn(n_mot, n_ra) / sqrt(n_ra);
 
 # syrinx; converts the motor activity signal m into a sound (here just matrix)
-S = (np.random.randn(n_sound,n_mot)) / sqrt(n_mot); #+ epsi*np.eye(n_sound,n_mot)) 
+# S = (np.random.randn(n_sound,n_mot)) / sqrt(n_mot); #+ epsi*np.eye(n_sound,n_mot)) 
+S = np.eye(n_sound, n_mot);
+
 
 # auditory pathway; converts the song into an auditory signal for aud
 # neurons (here just a matrix)
@@ -133,6 +135,7 @@ M=A.dot(S).dot(w_mot);
 # song_mot_tut = activation(np.random.randn(n_mot,T));
 
 song_mot_tut = audio.load_wave("startreck.wav");
+#song_mot_tut = audio.load_wave("sinus.wav");
 #song_mot_tut = np.reshape(ou.ou(n_mot*T), (n_mot,T));
 #song_mot_tut = np.random.randn(n_mot,T);
 
@@ -185,7 +188,7 @@ e_lman_sound = np.zeros(n_learn);
 e_potential = np.zeros(n_learn);
 e_hvc_sound = np.zeros(n_learn);
 
-n_pretraining =  0;  # 1400;  # 500; #1000;
+n_pretraining =  2000;  # 0 # 1400;  # 500; #1000;
 
 def phaseC0(): 
 
