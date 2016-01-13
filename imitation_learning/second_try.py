@@ -73,13 +73,13 @@ def activation(x, thresh = threshold):
 
 
 # dimension of song, ie number of "acoustic" degrees of freedom
-n_sound = 50 # 100 # 50 # 100 # 50 # 200; # was 20, or 50
+n_sound = 100 # 50 # 100 # 50 # 200; # was 20, or 50
 
 # number of motor neurons (RA)
-n_ra = n_sound  * 5;
+n_ra = n_sound #* 5;
 
-# degrees of freedome of the vocal tract:
-n_mot = n_sound  / 5;
+# degrees of freedom of the vocal tract:
+n_mot = n_sound # / 5;
 
 # number of auditory neurons which receive the sound and convert into neural activity.
 n_aud = n_sound;
@@ -99,7 +99,7 @@ n_hvc = T;
 tau = 7; 
 
 # learning steps for model 
-n_learn = 8000 #8000 # 4000 # 1200 # 2000 # 600 
+n_learn = 50 # 8000 # 4000 # 1200 # 2000 # 600 
 
 eta_lman = 0.002 # 0.05 # learning rate for inverse model via lman
 # -- that # seems to be sufficient. higfher learning rates in the
@@ -133,8 +133,9 @@ M=A.dot(S).dot(w_mot);
 # song_mot_tut = activation(np.random.randn(n_mot,T));
 
 song_mot_tut = audio.load_wave("startreck.wav");
+#song_mot_tut = np.reshape(ou.ou(n_mot*T), (n_mot,T));
 #song_mot_tut = np.random.randn(n_mot,T);
-song_mot_tut = np.reshape(ou.ou(n_mot*T), (n_mot,T));
+
 
 # acoustic representation of tutor song -- this is what we start from.
 # song_sound_tut = np.random.randn(n_sound,T); 
@@ -382,6 +383,7 @@ hardcopy("imitation_learning.png");
 
 # pick a random component of the sound:
 i=floor(np.random.rand()*n_sound);
+song = sing_HVC()
 
 figure(2);
 clf;
@@ -394,19 +396,16 @@ plot(song_sound_tut[i])
 legend("Tutor Song");
 
 hold("on");
+plot(song[i]);
+legend("HVC Song");
+hold("off");
+hardcopy("song.png")
 
-song = sing_HVC()
 
 final_song = audio.save_wave("song.wav", song);
 
 
 
-plot(song[i]);
-legend("HVC Song");
-
-hold("off");
-
-hardcopy("song.png")
 
 
 i=floor(np.random.rand()*n_ra);
