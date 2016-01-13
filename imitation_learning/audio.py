@@ -53,5 +53,7 @@ signal = save_wave("output.wav", transf)
 # use this shell command to filter the 100 Hz component out:
 # sox output.wav filtered.wav highpass 200 [norm?]
 
+# use this shell command to record new files:
+# arecord -r 10000 -d 1 -f S16_LE hallo.wav 
 
 
