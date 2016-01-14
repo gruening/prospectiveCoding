@@ -99,7 +99,7 @@ n_hvc = T;
 tau = 7; 
 
 # learning steps for model 
-n_learn = 150 # 1000 # 8000 # 4000 # 1200 # 2000 # 600 
+n_learn = 8000 # 150 # 1000 # 8000 # 4000 # 1200 # 2000 # 600 
 
 eta_lman = 0.002 # 0.05 # learning rate for inverse model via lman
 # -- that # seems to be sufficient. higfher learning rates in the
@@ -135,8 +135,8 @@ M=A.dot(S).dot(w_mot);
 # song_mot_tut = activation(np.random.randn(n_mot,T));
 
 #song_mot_tut = audio.load_wave("hallo.wav");
-#song_mot_tut = audio.load_wave("startreck.wav");
-song_mot_tut = audio.load_wave("sinus_3s.wav");
+song_mot_tut = audio.load_wave("startreck_3s.wav");
+#song_mot_tut = audio.load_wave("sinus_3s.wav");
 #song_mot_tut = np.reshape(ou.ou(n_mot*T), (n_mot,T));
 #song_mot_tut = np.random.randn(n_mot,T);
 
