@@ -19,8 +19,8 @@ def load_wave(fname):
 
 #    aud_raw -= aud_raw.mean();
     #   aud_raw /= aud_raw.std();
-    aud_sample = np.reshape(aud_raw, (bins, -1)) # samples into 100 time bins.
-    aud_dct = fftp.dct(aud_sample.real.astype(float), type=2, norm='ortho').T # matrix right way round?
+    aud_sample = np.reshape(aud_raw, (-1, bins)) # samples into 100 frequency
+    aud_dct = fftp.dct(aud_sample.real.astype(float), type=2, norm='ortho')#.T # matrix right way round?
 
     # Normalise:
     aud_dct -= aud_dct.mean(); 
@@ -35,7 +35,8 @@ def load_wave(fname):
     return aud_dct;
 
 def save_wave(fname, song):
-    output = fftp.idct(x=song.T, type=2, norm='ortho');
+#    output = fftp.idct(x=song.T, type=2, norm='ortho');
+    output = fftp.idct(x=song, type=2, norm='ortho');
     output2 = (output).ravel();
     figure(3)
     clf
@@ -47,13 +48,14 @@ def save_wave(fname, song):
 
     return output2
 
-transf = load_wave("startreck.wav")
-signal = save_wave("output.wav", transf)
+# transf = load_wave("startreck.wav")
+# signal = save_wave("output.wav", transf)
 
 # use this shell command to filter the 100 Hz component out:
 # sox output.wav filtered.wav highpass 200 [norm?]
 
 # use this shell command to record new files:
 # arecord -r 10000 -d 1 -f S16_LE hallo.wav 
+
 
 
