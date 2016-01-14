@@ -38,11 +38,11 @@ def delayperm(x,n):  # Circles the columns of matrix x to the right by n columns
 least = 0; # -1000
 threshold = 0.0;
 ra_thresh = 0.0;
-sat = 1000
+sat = 8000
 
 # take the "membrane potential" x and applies a threadhold linear function to it:
 def activation(x, thresh = threshold): 
-#    return maximum(x - thresh, 0);
+#    return maximum(x - thresh, 0); // I cant activate this as long as I ask RA to produce the sound direct => 4fold decomposition into positive values only?
     return x
 #    return x.clip(least, sat)
 
