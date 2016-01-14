@@ -135,8 +135,8 @@ M=A.dot(S).dot(w_mot);
 # song_mot_tut = activation(np.random.randn(n_mot,T));
 
 #song_mot_tut = audio.load_wave("hallo.wav");
-song_mot_tut = audio.load_wave("startreck_3s.wav");
-#song_mot_tut = audio.load_wave("sinus_3s.wav");
+#song_mot_tut = audio.load_wave("startreck_3s.wav");
+song_mot_tut = audio.load_wave("caesar_3s.wav");
 #song_mot_tut = np.reshape(ou.ou(n_mot*T), (n_mot,T));
 #song_mot_tut = np.random.randn(n_mot,T);
 
