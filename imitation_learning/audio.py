@@ -12,7 +12,7 @@ def load_wave(fname):
     tutor_wav = wav.wavfile(fname);
     aud_raw = np.array(tutor_wav.read());
 
-    figure(1);
+    figure(4);
     clf
     legend("Audio Input -- raw")
     plot(aud_raw[0:100])
@@ -26,7 +26,7 @@ def load_wave(fname):
     aud_dct -= aud_dct.mean(); 
     aud_dct /= aud_dct.std();
 
-    figure(2);
+    figure(5);
     clf;
     legend("FFT");
     plot(aud_dct[:,0])
@@ -38,12 +38,18 @@ def save_wave(fname, song):
 #    output = fftp.idct(x=song.T, type=2, norm='ortho');
     output = fftp.idct(x=song, type=2, norm='ortho');
     output2 = (output).ravel();
-    figure(3)
+
+    maximum = (abs(output2)).max()
+
+    output2 *= (65536 * 30000) / maximum; # scale to about 80% of 16 bit range
+
+    figure(6)
     clf
     legend("Audio out")
     plot(output2[0:100]);
     out_wav = wav.wavfile(fname, mode="w", sampling_rate = rate, dtype = u'f', nchannels = 1);
-    out_wav.write(data=output2, scale=True); # do I need to reshape, or is the automatic flattening the right thing?
+    #out_wav.write(data=output2, scale=True); # do I need to reshape, or is the automatic flattening the right thing?    
+    out_wav.write(data=output2); # do I need to reshape, or is the automatic flattening the right thing?
     out_wav.flush()
 
     return output2

@@ -89,7 +89,7 @@ n_lman = n_aud;
 
 # duration of subsongs and of tutor song  [steps of 10ms] -- so we are
 # modelling 1 sec here -- realistic length of song?
-T = 300; 
+T = 300; # 100 
 
 # Number of HVC clock neurons -- one time step is 10ms
 n_hvc = T;
@@ -107,7 +107,7 @@ eta_lman = 0.002 # 0.05 # learning rate for inverse model via lman
 # lead to oscilations, 0.003 to fluctations , 0.0001 is too small.
 
 # learning rate for weight copying 
-eta_hvc = 0.01 # one shot learning does not explore the inverse map sufficiently.
+eta_hvc = 0.001 # 0.01 # one shot learning does not explore the inverse map sufficiently.
 
 # Parameter to regularize the matrices 
 # epsi = 1/10; 
