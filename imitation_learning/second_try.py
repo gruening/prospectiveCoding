@@ -97,7 +97,7 @@ def activation(x, thresh = threshold):
 n_sound = 100 # 50 # 100 # 50 # 200; # was 20, or 50
 
 # number of motor neurons (RA)
-n_ra = n_sound #* 5;
+n_ra = 10 #n_sound #* 5;
 
 # degrees of freedom of the vocal tract:
 n_syrinx = 2
