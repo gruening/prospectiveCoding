@@ -133,7 +133,7 @@ eta_hvc = 0.001 # 0.01 # one shot learning does not explore the inverse map suff
 # weights between RA and the syrinx degrees of freedom (the syrinx is the bottle neck re degrees of freedom) 
 
 #w_mot = np.eye(n_syrinx, n_ra) #/ sqrt(sqrt(n_ra));
-w_mot = np.random.randn(n_syrinx, n_ra) / sqrt(n_ra) / 100;
+w_mot = np.random.randn(n_syrinx, n_ra) / sqrt(n_ra) / 10 ;
 
 # syrinx; converts the motor activity signal to the syrinx m into a sound (in frequency domain)
 # S = (np.random.randn(n_sound,n_mot)) / sqrt(n_mot); #+ epsi*np.eye(n_sound,n_mot)) 
