@@ -14,7 +14,7 @@ def load_wave(fname):
 
     figure(4);
     clf
-    plot(aud_raw[0:samples_per_bin])
+    #plot(aud_raw[0:samples_per_bin])
     legend("Audio Input -- Audio Samples -- First Bin")
 
 #    aud_raw -= aud_raw.mean();
@@ -28,12 +28,12 @@ def load_wave(fname):
 
     figure(5);
     clf;
-    plot(aud_dct[0])
+    #plot(aud_dct[0])
     legend("FFT of the first bin");
 
     figure(6);
     clf;
-    plot(aud_dct[:,0])
+    #plot(aud_dct[:,0])
     legend("Amplitude of first frequency of FFT across all bins");
          
     return aud_dct.T; # we need matrix in format that we have the 100 frequency as rows.
@@ -50,7 +50,7 @@ def save_wave(fname, song):
 
     figure(7)
     clf
-    plot(output2[0:100]);
+    #plot(output2[0:100]);
     legend("Audio out -- first 100 sample points")
     out_wav = wav.wavfile(fname, mode="w", sampling_rate = rate, dtype = u'f', nchannels = 1);
     out_wav.write(data=output2, scale=True); # do I need to reshape, or is the automatic flattening the right thing?    

@@ -25,6 +25,8 @@ import ewave as wav
 import ou
 import audio
 
+show_on = False
+
 rate = 10000
 
 # acoustic representation of tutor song -- this is what we start from.
@@ -106,7 +108,6 @@ n_aud = n_sound;
 # number of neurons in LMAN 
 n_lman = n_aud;
 
-
 # Number of HVC clock neurons -- one time step is 10ms
 n_hvc = T;
 
@@ -115,7 +116,7 @@ n_hvc = T;
 tau = 7; 
 
 # learning steps for model 
-n_learn = 4000 #10 # 8000 # 150 # 1000 # 8000 # 4000 # 1200 # 2000 # 600 
+n_learn = 2 # 4000 #10 # 8000 # 150 # 1000 # 8000 # 4000 # 1200 # 2000 # 600 
 
 eta_lman = 0.002 # 0.05 # learning rate for inverse model via lman
 # -- that # seems to be sufficient. higfher learning rates in the
@@ -396,15 +397,15 @@ title('Birdsong learning');
 xlabel('Steps'); 
 ylabel('SME');
 
-plot(e_lman_sound); 
+plot(e_lman_sound, show=show_on); 
 legend('Phase C: Causal Inverse Learning: HVC-song vs predicated song from LMAN)');
 
 hold("on");
 
-plot(e_hvc_sound); 
+plot(e_hvc_sound, show=show_on); 
 legend('Tutor song vs actual performed song (by HVC)');
 
-plot(e_potential); 
+plot(e_potential, show=show_on); 
 legend('Phase B: Activity copying from LMAN to HVC');
 
 hold("off")
@@ -427,11 +428,11 @@ xlabel('Time of Song');
 ylabel('Activity');
 
 
-plot(song_sound_tut[i])
+plot(song_sound_tut[i], show=show_on)
 legend("Tutor Song");
 
 hold("on");
-plot(song[i]);
+plot(song[i], show=show_on);
 legend("HVC Song");
 hold("off");
 hardcopy("song.png")
@@ -453,7 +454,7 @@ xlabel('Time');
 ylabel('Activity');
 
 
-plot(ra_soma[i])
+plot(ra_soma[i], show = show_on)
 legend("RA activity");
 
 hardcopy("RA_activity.png")
