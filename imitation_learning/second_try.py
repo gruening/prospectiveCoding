@@ -116,7 +116,7 @@ n_hvc = T;
 tau = 7; 
 
 # learning steps for model 
-n_learn = 2 # 4000 #10 # 8000 # 150 # 1000 # 8000 # 4000 # 1200 # 2000 # 600 
+n_learn = 1000 #2 # 4000 #10 # 8000 # 150 # 1000 # 8000 # 4000 # 1200 # 2000 # 600 
 
 eta_lman = 0.002 # 0.05 # learning rate for inverse model via lman
 # -- that # seems to be sufficient. higfher learning rates in the
