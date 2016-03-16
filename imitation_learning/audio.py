@@ -12,10 +12,10 @@ def load_wave(fname):
     tutor_wav = wav.wavfile(fname);
     aud_raw = np.array(tutor_wav.read());
 
-    figure(4);
-    clf
+    #figure(4);
+    #clf
     #plot(aud_raw[0:samples_per_bin])
-    legend("Audio Input -- Audio Samples -- First Bin")
+    #legend("Audio Input -- Audio Samples -- First Bin")
 
 #    aud_raw -= aud_raw.mean();
     #   aud_raw /= aud_raw.std();
@@ -26,15 +26,15 @@ def load_wave(fname):
     aud_dct -= aud_dct.mean(); 
     aud_dct /= aud_dct.std();
 
-    figure(5);
-    clf;
+    #figure(5);
+    #clf;
     #plot(aud_dct[0])
-    legend("FFT of the first bin");
+    #legend("FFT of the first bin");
 
-    figure(6);
-    clf;
+    #figure(6);
+    #clf;
     #plot(aud_dct[:,0])
-    legend("Amplitude of first frequency of FFT across all bins");
+    #legend("Amplitude of first frequency of FFT across all bins");
          
     return aud_dct.T; # we need matrix in format that we have the 100 frequency as rows.
 
@@ -48,10 +48,10 @@ def save_wave(fname, song):
 
 #    output2 *= (30000) / maximum; # scale to about 80% of 16 bit range
 
-    figure(7)
-    clf
+    #figure(7)
+    #clf
     #plot(output2[0:100]);
-    legend("Audio out -- first 100 sample points")
+    #legend("Audio out -- first 100 sample points")
     out_wav = wav.wavfile(fname, mode="w", sampling_rate = rate, dtype = u'f', nchannels = 1);
     out_wav.write(data=output2, scale=True); # do I need to reshape, or is the automatic flattening the right thing?    
     #out_wav.write(data=output2); # do I need to reshape, or is the automatic flattening the right thing?
