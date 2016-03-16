@@ -1,0 +1,18 @@
+# from Fig 12 in [gnuspeech_monet_manual]
+Name,mininum,maximun,default
+microInt,-10,10,0
+glotVal,0,60,60
+aspVol,0,60,0
+fricVol,0,10,0
+fricPos,0,7,5.5
+fricCF,100,20000,2500
+fricBF,250,20000,500
+r1,0,3,0.8
+r2,0,3,1.5
+r3,0,3,1.5
+r4,0,3,1.5
+r5,0,3,1.5
+r6,0,3,1.5
+r7,0,3,1.5
+r8,0,3,1.5
+velum,0,1.5,0.1
