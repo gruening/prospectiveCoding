@@ -97,7 +97,7 @@ def activation(x, thresh = threshold):
 n_sound = 100 # 50 # 100 # 50 # 200; # was 20, or 50
 
 # number of motor neurons (RA)
-n_ra = 10 #n_sound #* 5;
+n_ra = 2 # n_sound #* 5;
 
 # degrees of freedom of the vocal tract:
 n_syrinx = 2
@@ -199,7 +199,7 @@ e_lman_sound = np.zeros(n_learn);
 e_potential = np.zeros(n_learn);
 e_hvc_sound = np.zeros(n_learn);
 
-n_pretraining =  0 # 2000;  # 0 # 1400;  # 500; #1000;
+n_pretraining =  1000 # 2000;  # 0 # 1400;  # 500; #1000;
 
 def phaseC0(): 
 
@@ -218,7 +218,7 @@ def phaseC0():
 
     syrinx_soma = w_mot.dot(ra_soma)
     # auditory activity produced by the random activity:
-    syrinx_out = map(syrinx, syrinx_soma[0], syrinx_soma[1])
+    syrinx_out = np.array(map(syrinx, syrinx_soma[0], syrinx_soma[1])).T
     aud_soma = activation(delayperm(A.dot(syrinx_out),tau)) 
     lman_soma = aud_soma
 
@@ -397,15 +397,15 @@ title('Birdsong learning');
 xlabel('Steps'); 
 ylabel('SME');
 
-plot(e_lman_sound, show=show_on); 
+plot(e_lman_sound, show=show_on, savefig = "one.png"); 
 legend('Phase C: Causal Inverse Learning: HVC-song vs predicated song from LMAN)');
 
 hold("on");
 
-plot(e_hvc_sound, show=show_on); 
+plot(e_hvc_sound, show=show_on, savefig = "two.png"); 
 legend('Tutor song vs actual performed song (by HVC)');
 
-plot(e_potential, show=show_on); 
+plot(e_potential, show=show_on, savefig = "three.png"); 
 legend('Phase B: Activity copying from LMAN to HVC');
 
 hold("off")
@@ -428,11 +428,11 @@ xlabel('Time of Song');
 ylabel('Activity');
 
 
-plot(song_sound_tut[i], show=show_on)
+plot(song_sound_tut[i], show=show_on, savefig = "four.png")
 legend("Tutor Song");
 
 hold("on");
-plot(song[i], show=show_on);
+plot(song[i], show=show_on, savefig = "five.png");
 legend("HVC Song");
 hold("off");
 hardcopy("song.png")
@@ -454,7 +454,7 @@ xlabel('Time');
 ylabel('Activity');
 
 
-plot(ra_soma[i], show = show_on)
+plot(ra_soma[i], show = show_on, savefig = "six.png")
 legend("RA activity");
 
 hardcopy("RA_activity.png")
